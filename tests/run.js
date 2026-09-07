@@ -129,6 +129,21 @@ if (fs.existsSync(path.join(FIXTURES, "sumo-torikumi.json"))) {
 }
 
 assert("notificationArg strips dashes", SportsModel.notificationArg("--hint=bad", "x") === "hint=bad")
+assert("invalid sumo basho rejected", SumoModel.parseBasho(JSON.stringify({
+  date: "", startDate: "0001-01-01T00:00:00Z", endDate: "0001-01-01T00:00:00Z"
+}), "202611") === null)
+
+const heyaMap = { "8850": { id: 8850, name: "Onosato", heya: "Nishonoseki", rank: "Yokozuna" } }
+const withHeya = SumoModel.applyHeya([{ id: 8850, name: "Onosato", wins: 3, rank: "Yokozuna 1 East" }], heyaMap)
+assert("heya joined onto banzuke", withHeya[0].heya === "Nishonoseki")
+assert("heya standings use stables", SumoModel.heyaStandings(withHeya)[0].name === "Nishonoseki")
+
+assert("live matches are unfinished today", CsModel.liveMatches([
+  { date: CsModel.utcDateString(Date.now()), finished: false, event: "BLAST Open" },
+  { date: CsModel.utcDateString(Date.now()), finished: true, event: "BLAST Open" }
+], Date.now()).length === 1)
+
+assert("closed qualifier is not tier 1", CsModel.isTier1("IEM Beijing 2026 Closed Qualifier") === false)
 
 console.log(passed + " passed, " + failed + " failed")
 process.exit(failed === 0 ? 0 : 1)

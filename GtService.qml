@@ -9,8 +9,10 @@ QtObject {
   property int refreshMinutes: 15
   property string highlightPlayer: ""
   property string highlightTeam: ""
+  property string continentFilter: "all"
 
   property var events: []
+  property var allEvents: []
   property var playerRows: []
   property var teamRows: []
 
@@ -28,9 +30,25 @@ QtObject {
   readonly property bool failed: false
   readonly property double lastUpdatedAt: now
 
-  function refresh(force) {
-    root.events = GtModel.seedCalendar()
+  function applyFilter() {
+    var all = root.allEvents
+    if (root.continentFilter && root.continentFilter !== "all") {
+      var out = []
+      for (var i = 0; i < all.length; i++) {
+        if (all[i].continent === root.continentFilter) out.push(all[i])
+      }
+      root.events = out
+    } else {
+      root.events = all
+    }
   }
+
+  function refresh(force) {
+    root.allEvents = GtModel.seedCalendar()
+    applyFilter()
+  }
+
+  onContinentFilterChanged: applyFilter()
 
   Component.onCompleted: refresh(false)
 }

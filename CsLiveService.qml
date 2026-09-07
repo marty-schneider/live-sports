@@ -12,18 +12,20 @@ QtObject {
   property bool enabled: false
   property int refreshSeconds: 12
   property var scheduledSession: null
+  property var matches: []
 
   property var grid: []
   property string lastError: ""
   property double lastUpdateAt: 0
   property string statusLabel: "IDLE"
   property string statusKind: "neutral"
-  property string liveReason: "Live CS scoreboard needs a PandaScore token in ~/.config/omarchy/live-sports/credentials"
+  property string liveReason: ""
   property bool hasToken: false
   property bool polls: false
 
-  readonly property bool hasLiveSession: scheduledSession !== null
-  readonly property bool hasData: grid.length > 0
+  readonly property var freeLive: CsModel.liveMatches(matches, now)
+  readonly property bool hasLiveSession: scheduledSession !== null || freeLive.length > 0
+  readonly property bool hasData: grid.length > 0 || (!hasToken && freeLive.length > 0)
   readonly property string sessionName: scheduledSession ? scheduledSession.name : ""
   readonly property int currentLap: 0
   readonly property int totalLaps: 0
@@ -39,9 +41,15 @@ QtObject {
     root.hasToken = text.indexOf("yes") === 0
     if (!root.hasToken) {
       root.polls = false
-      root.liveReason = "Live CS scoreboard needs a PandaScore token in ~/.config/omarchy/live-sports/credentials (pandascore_token=…)"
-      root.statusLabel = "NO TOKEN"
-      root.statusKind = "warn"
+      if (root.freeLive.length > 0) {
+        root.liveReason = ""
+        root.statusLabel = "LIVE"
+        root.statusKind = "live"
+      } else {
+        root.liveReason = "No live CS match on the free feed. A PandaScore token in ~/.config/omarchy/live-sports/credentials unlocks round-by-round timing."
+        root.statusLabel = "WAITING"
+        root.statusKind = "neutral"
+      }
       return
     }
     root.liveReason = ""

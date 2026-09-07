@@ -1,5 +1,7 @@
 # Live Sports for Omarchy
 
+**v0.2.0** — CS match cards, Sumo heya + bout list, GT continent filter, F1-style live empty states.
+
 One bar pill and dashboard for three sports, with a switcher so more sports can be added later:
 
 - **Counter-Strike** — Valve Majors and RMRs, BLAST Open / Premier / Bounty / Rivals, ESL Pro League, IEM
@@ -28,7 +30,9 @@ omarchy plugin enable io.github.marty-schneider.live-sports
 
 ## Use
 
-Click the pill. `1` / `2` / `3` (or the CS2 · SUMO · GT chips) switch sports. Enter toggles live mode, `r` refreshes, Escape closes.
+Click the pill. `1` / `2` / `3` (or the CS2 · SUMO · GT chips) switch sports. On GT, EU / AM / AS / AU filters the calendar. Enter toggles live mode, `r` refreshes, Escape closes.
+
+The live view is sport-specific: CS map scores, Sumo East/West bouts, GT timing when a feed is configured. With nothing running it names the next session and the countdown, the same way F1 Live does.
 
 Right-click the pill to announce the next session. Middle-click forces a refresh.
 

@@ -51,6 +51,7 @@ function parseBasho(raw, id) {
   var startAt = SportsTime.parseIso(data.startDate)
   var endAt = SportsTime.parseIso(data.endDate)
   if (!SportsTime.isInstant(startAt) || !SportsTime.isInstant(endAt)) return null
+  if (new Date(startAt).getUTCFullYear() < 2000) return null
   var meta = bashoMeta(data.date || id)
   // API endDate is the first moment of the last day; extend through makuuchi.
   var lastDay = makuuchiWindow(endAt)
@@ -140,6 +141,8 @@ function parseTorikumi(raw) {
       pits: 0,
       east: SportsModel.str(row.eastShikona),
       west: SportsModel.str(row.westShikona),
+      eastRank: SportsModel.str(row.eastRank),
+      westRank: SportsModel.str(row.westRank),
       winner: SportsModel.str(row.winnerEn),
       kimarite: SportsModel.str(row.kimarite),
       finished: done
@@ -149,13 +152,45 @@ function parseTorikumi(raw) {
   return out
 }
 
+function parseRikishiList(raw) {
+  var data = SportsModel.safeParse(raw)
+  var rows = data ? SportsModel.arrayOf(data.records) : SportsModel.arrayOf(data)
+  var map = {}
+  for (var i = 0; i < rows.length; i++) {
+    var row = rows[i]
+    if (!row || row.id === undefined) continue
+    map[String(row.id)] = {
+      id: SportsModel.int(row.id),
+      name: SportsModel.str(row.shikonaEn),
+      heya: SportsModel.str(row.heya),
+      rank: SportsModel.str(row.currentRank)
+    }
+  }
+  return map
+}
+
+function applyHeya(rikishi, heyaMap) {
+  var list = SportsModel.arrayOf(rikishi)
+  var out = []
+  for (var i = 0; i < list.length; i++) {
+    var row = {}
+    for (var k in list[i]) row[k] = list[i][k]
+    var extra = heyaMap && heyaMap[String(row.id)]
+    if (extra && extra.heya) {
+      row.heya = extra.heya
+      row.teamName = extra.heya
+    }
+    out.push(row)
+  }
+  return out
+}
+
 function heyaStandings(rikishi) {
-  // Banzuke payload has no heya; keep a pin-shaped team list from rank families.
   var groups = {}
   var list = SportsModel.arrayOf(rikishi)
   for (var i = 0; i < list.length; i++) {
-    var family = SportsModel.str(list[i].rank).replace(/\s+\d.*$/, "") || "Makuuchi"
-    if (!groups[family]) groups[family] = { id: family, name: family, teamName: family, points: 0, wins: 0 }
+    var family = SportsModel.str(list[i].heya) || SportsModel.str(list[i].rank).replace(/\s+\d.*$/, "") || "Makuuchi"
+    if (!groups[family]) groups[family] = { id: family, name: family, teamName: family, heya: family, points: 0, wins: 0 }
     groups[family].wins += list[i].wins || 0
     groups[family].points += list[i].wins || 0
   }
@@ -176,6 +211,8 @@ if (typeof module !== "undefined") {
     parseBasho: parseBasho,
     parseBanzuke: parseBanzuke,
     parseTorikumi: parseTorikumi,
+    parseRikishiList: parseRikishiList,
+    applyHeya: applyHeya,
     heyaStandings: heyaStandings
   }
 }

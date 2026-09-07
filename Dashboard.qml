@@ -40,6 +40,7 @@ Panel {
   readonly property string gtHighlightTeam: String(setting("gtHighlightTeam", "Mercedes"))
 
   property string sportId: "cs"
+  property string gtContinent: "all"
   readonly property var sports: ["cs", "sumo", "gt"]
 
   readonly property double now: timeSvc.now
@@ -78,6 +79,7 @@ Panel {
     refreshMinutes: root.refreshMinutes
     highlightPlayer: root.gtHighlightPlayer
     highlightTeam: root.gtHighlightTeam
+    continentFilter: root.gtContinent
   }
 
   readonly property var sport: sportId === "sumo" ? sumo : sportId === "gt" ? gt : cs
@@ -89,6 +91,7 @@ Panel {
     enabled: root.liveMode && root.sportId === "cs"
     refreshSeconds: root.liveRefreshSec
     scheduledSession: root.sportId === "cs" ? root.sport.liveSession : null
+    matches: root.cs.matches
   }
   property SumoLiveService sumoLive: SumoLiveService {
     now: root.now
@@ -134,13 +137,14 @@ Panel {
   }
 
   function persistUi() {
-    uiFile.setText(JSON.stringify({ sportId: sportId }) + "\n")
+    uiFile.setText(JSON.stringify({ sportId: sportId, gtContinent: gtContinent }) + "\n")
   }
 
   function loadUi(raw) {
     var parsed = SportsModel.safeParse(raw)
     if (parsed && sports.indexOf(parsed.sportId) >= 0) sportId = parsed.sportId
     else if (sports.indexOf(defaultSport) >= 0) sportId = defaultSport
+    if (parsed && parsed.gtContinent) gtContinent = parsed.gtContinent
   }
 
   property FileView uiFile: FileView {
@@ -154,7 +158,7 @@ Panel {
   readonly property string label: {
     if (!sport.loaded) return sport.failed ? sportLabel + " —" : sportLabel + " ⋯"
     if (sport.offSeason) return sportLabel + " OFF"
-    if (sport.liveSession) return sportLabel + " " + sport.liveSession.short
+    if (sport.liveSession) return sportLabel + " LIVE"
     var next = sport.event ? SportsModel.nextSession(sport.event, now) : null
     if (!next) return sportLabel + " —"
     return sportLabel + " " + shortCountdownTo(next.startAt)
@@ -488,11 +492,11 @@ Panel {
           font.pixelSize: Style.font.bodySmall
         }
         Row {
-          spacing: Style.space(12)
+          spacing: Style.space(16)
           Column {
             spacing: Style.space(2)
             Text {
-              text: root.sportId === "sumo" ? "NEXT SESSION" : root.sportId === "cs" ? "EVENT WINDOW" : "GREEN FLAG"
+              text: root.sportId === "sumo" ? "NEXT SESSION" : root.sportId === "cs" ? "NEXT MATCH WINDOW" : "GREEN FLAG"
               color: root.dimmer
               font.family: root.fontFamily
               font.pixelSize: Style.font.caption
@@ -507,12 +511,63 @@ Panel {
             Text {
               text: {
                 var next = event ? SportsModel.nextSession(event, root.now) : null
-                if (next) return root.fmtTime(next.startAt) + " your time · " + root.countdownTo(next.startAt)
+                if (next) return root.fmtTime(next.startAt) + " your time"
                 return event ? root.fmtTime(event.startAt) + " your time" : ""
               }
               color: root.dim
               font.family: root.fontFamily
               font.pixelSize: Style.font.caption
+            }
+          }
+          Text {
+            text: {
+              var next = event ? SportsModel.nextSession(event, root.now) : null
+              var at = next ? next.startAt : (event ? event.weekendStartAt : null)
+              return root.countdownTo(at)
+            }
+            color: Color.accent
+            font.family: root.fontFamily
+            font.pixelSize: Style.font.title
+            font.bold: true
+          }
+        }
+
+        Row {
+          visible: root.sportId === "gt"
+          spacing: Style.space(6)
+          Repeater {
+            model: [
+              { id: "all", label: "ALL" },
+              { id: "Europe", label: "EU" },
+              { id: "America", label: "AM" },
+              { id: "Asia", label: "AS" },
+              { id: "Australia", label: "AU" }
+            ]
+            Rectangle {
+              required property var modelData
+              implicitWidth: cLab.implicitWidth + Style.space(12)
+              implicitHeight: cLab.implicitHeight + Style.space(6)
+              radius: Math.max(2, Style.cornerRadius)
+              color: root.gtContinent === modelData.id ? Util.alpha(Color.accent, 0.18) : Util.alpha(root.fg, 0.05)
+              border.width: root.gtContinent === modelData.id ? 1 : 0
+              border.color: Util.alpha(Color.accent, 0.5)
+              Text {
+                id: cLab
+                anchors.centerIn: parent
+                text: modelData.label
+                color: root.gtContinent === modelData.id ? Color.accent : root.dim
+                font.family: root.fontFamily
+                font.pixelSize: Style.font.caption
+                font.bold: root.gtContinent === modelData.id
+              }
+              MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: {
+                  root.gtContinent = modelData.id
+                  root.persistUi()
+                }
+              }
             }
           }
         }
@@ -565,6 +620,7 @@ Panel {
             subtitle: (modelData.series || "") + (modelData.continent ? " · " + modelData.continent : "")
             meta: modelData.locality + " · " + root.fmtDate(modelData.weekendStartAt || modelData.startAt)
             countdown: root.shortCountdownTo(modelData.weekendStartAt || modelData.startAt)
+            chipText: modelData.continent || modelData.series || ""
             foreground: root.fg
             fontFamily: root.fontFamily
           }
@@ -581,18 +637,16 @@ Panel {
       }
       Column {
         width: parent.width
+        spacing: Style.space(6)
         visible: root.sport.recent && root.sport.recent.length > 0
         Repeater {
           model: root.sport.recent || []
-          StandingRow {
+          MatchRow {
             required property var modelData
             width: parent.width
-            position: index + 1
-            positionPrefix: ""
-            name: modelData.team1.name + " " + modelData.team1.score + "–" + modelData.team2.score + " " + modelData.team2.name
-            teamName: modelData.event
+            match: modelData
+            live: !modelData.finished
             teamColor: CsColors.colorFor(modelData.winnerName || modelData.team1.name)
-            valueText: modelData.winnerName !== "" ? modelData.winnerName : "BO" + modelData.bestOf
             foreground: root.fg
             fontFamily: root.fontFamily
           }
@@ -620,7 +674,10 @@ Panel {
             code: modelData.code || ""
             teamName: modelData.teamName || modelData.rank || ""
             teamColor: root.sportId === "gt" ? GtColors.colorFor(modelData.teamName) : CsColors.colorFor(modelData.teamName || modelData.name)
-            valueText: root.sportId === "sumo" ? modelData.record : (root.sportId === "cs" ? Number(modelData.points).toFixed(2) : String(modelData.points))
+            valueText: root.sportId === "sumo" ? modelData.record
+              : root.sportId === "cs" ? Number(modelData.points).toFixed(2)
+              : String(modelData.points) + " pts"
+            noteText: root.sportId === "cs" && modelData.adr ? Math.round(modelData.adr) + " ADR" : (modelData.rank || "")
             pinned: SportsModel.matchPin(modelData, root.sportId === "sumo" ? root.sumoHighlightPlayer : root.sportId === "gt" ? root.gtHighlightPlayer : root.csHighlightPlayer)
             foreground: root.fg
             fontFamily: root.fontFamily
@@ -643,7 +700,7 @@ Panel {
       PanelSeparator { width: parent.width; visible: root.sport.teamStandings.top.length > 0 }
       PanelSectionHeader {
         visible: root.sport.teamStandings.top.length > 0
-        text: root.sportId === "sumo" ? "RANK BANDS" : "TEAMS"
+        text: root.sportId === "sumo" ? "HEYA" : "TEAMS"
         foreground: root.fg
         fontFamily: root.fontFamily
         leftPadding: Style.space(4)
@@ -661,7 +718,7 @@ Panel {
             teamName: ""
             showTeam: false
             teamColor: CsColors.colorFor(modelData.name)
-            valueText: root.sportId === "cs" ? String(modelData.points) : String(modelData.points)
+            valueText: root.sportId === "cs" ? String(modelData.points) + " pts" : String(modelData.points)
             noteText: modelData.note || ""
             pinned: SportsModel.matchPin(modelData, root.sportId === "sumo" ? root.sumoHighlightTeam : root.sportId === "gt" ? root.gtHighlightTeam : root.csHighlightTeam)
             foreground: root.fg
@@ -690,44 +747,135 @@ Panel {
       spacing: Style.space(10)
       width: parent ? parent.width : 0
 
-      Text {
-        leftPadding: Style.space(4)
-        text: root.live.sessionName !== "" ? root.live.sessionName : "Live"
-        color: root.fg
-        font.family: root.fontFamily
-        font.pixelSize: Style.font.body
-        font.bold: true
+      readonly property bool empty: {
+        if (root.sportId === "cs") return root.cs.liveMatches.length === 0 && !root.live.hasData
+        if (root.sportId === "sumo") return root.sumo.torikumi.length === 0
+        return !root.live.hasData
       }
-      Text {
-        visible: root.live.liveReason && root.live.liveReason !== ""
-        width: parent.width - Style.space(8)
-        leftPadding: Style.space(4)
-        wrapMode: Text.WordWrap
-        text: root.live.liveReason
-        color: root.dim
-        font.family: root.fontFamily
-        font.pixelSize: Style.font.bodySmall
-      }
-      StatusChip {
-        visible: root.live.statusLabel !== ""
-        text: root.live.statusLabel
-        tone: root.live.statusKind || "neutral"
-        foreground: root.fg
-        fontFamily: root.fontFamily
-        filled: true
-      }
+
       Column {
         width: parent.width
-        visible: root.live.hasData
-        Repeater {
-          model: root.live.grid
-          LiveRow {
-            required property var modelData
-            width: parent.width
-            entry: modelData
-            teamColor: root.sportId === "gt" ? GtColors.colorFor(modelData.teamName) : CsColors.colorFor(modelData.teamName || modelData.name)
+        visible: empty
+        spacing: Style.space(8)
+        Text {
+          width: parent.width
+          leftPadding: Style.space(4)
+          text: "No " + root.sportTitle + " session is live."
+          color: root.fg
+          font.family: root.fontFamily
+          font.pixelSize: Style.font.subtitle
+        }
+        Text {
+          width: parent.width
+          leftPadding: Style.space(4)
+          wrapMode: Text.WordWrap
+          text: {
+            if (!root.sport.event) return "Nothing is on the calendar."
+            var next = SportsModel.nextSession(root.sport.event, root.now)
+            if (!next) return root.sport.event.name + " has finished."
+            return root.sport.event.name + " · " + next.name + " starts "
+              + root.fmtDayTime(next.startAt) + " — in " + root.countdownTo(next.startAt) + "."
+          }
+          color: root.dim
+          font.family: root.fontFamily
+          font.pixelSize: Style.font.bodySmall
+        }
+        Text {
+          width: parent.width
+          leftPadding: Style.space(4)
+          visible: root.live.liveReason && root.live.liveReason !== ""
+          wrapMode: Text.WordWrap
+          text: root.live.liveReason
+          color: root.dimmer
+          font.family: root.fontFamily
+          font.pixelSize: Style.font.caption
+        }
+        Text {
+          width: parent.width
+          leftPadding: Style.space(4)
+          text: "Turn live mode off to return to the overview."
+          color: root.dimmer
+          font.family: root.fontFamily
+          font.pixelSize: Style.font.caption
+        }
+      }
+
+      Column {
+        width: parent.width
+        visible: !empty
+        spacing: Style.space(10)
+
+        Item {
+          width: parent.width
+          height: liveTitle.implicitHeight
+          Text {
+            id: liveTitle
+            anchors.left: parent.left
+            anchors.leftMargin: Style.space(4)
+            text: root.live.sessionName !== "" ? root.live.sessionName : root.sport.event ? root.sport.event.name : "Live"
+            color: root.fg
+            font.family: root.fontFamily
+            font.pixelSize: Style.font.title
+            font.bold: true
+          }
+          StatusChip {
+            anchors.right: parent.right
+            anchors.rightMargin: Style.space(4)
+            anchors.verticalCenter: parent.verticalCenter
+            text: root.live.statusLabel || "LIVE"
+            tone: "live"
             foreground: root.fg
             fontFamily: root.fontFamily
+            filled: true
+          }
+        }
+
+        Column {
+          width: parent.width
+          spacing: Style.space(6)
+          visible: root.sportId === "cs"
+          Repeater {
+            model: root.cs.liveMatches.length > 0 ? root.cs.liveMatches : []
+            MatchRow {
+              required property var modelData
+              width: parent.width
+              match: modelData
+              live: true
+              teamColor: CsColors.colorFor(modelData.team1.name)
+              foreground: root.fg
+              fontFamily: root.fontFamily
+            }
+          }
+        }
+
+        Column {
+          width: parent.width
+          visible: root.sportId === "sumo"
+          Repeater {
+            model: root.sumo.torikumi
+            BoutRow {
+              required property var modelData
+              width: parent.width
+              bout: modelData
+              foreground: root.fg
+              fontFamily: root.fontFamily
+            }
+          }
+        }
+
+        Column {
+          width: parent.width
+          visible: root.sportId === "gt"
+          Repeater {
+            model: root.live.grid
+            LiveRow {
+              required property var modelData
+              width: parent.width
+              entry: modelData
+              teamColor: GtColors.colorFor(modelData.teamName)
+              foreground: root.fg
+              fontFamily: root.fontFamily
+            }
           }
         }
       }

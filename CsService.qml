@@ -20,27 +20,30 @@ QtObject {
   readonly property var event: currentIndex >= 0 ? events[currentIndex] : null
   readonly property var upcoming: SportsModel.upcomingEvents(events, currentIndex, 3)
   readonly property var weekend: SportsModel.weekendState(event, now, "CS")
-  readonly property var liveSession: event ? SportsModel.liveSession(event, now) : null
+  readonly property var liveMatches: CsModel.liveMatches(matches, now)
+  readonly property var liveSession: {
+    if (liveMatches.length > 0) {
+      var first = liveMatches[0]
+      return {
+        key: "live", short: "LIVE", name: first.event || "Live match", group: "Match",
+        startAt: now, endAt: now + 3 * SportsTime.HOUR, dateOnly: false
+      }
+    }
+    return event ? SportsModel.liveSession(event, now) : null
+  }
   readonly property var teamStandings: SportsModel.standingsWithPin(teamRows, 5, highlightTeam)
   readonly property var playerStandings: SportsModel.standingsWithPin(playerRows, 5, highlightPlayer)
-  readonly property var recent: matches.slice(0, 6)
+  readonly property var recent: matches.slice(0, 8)
   readonly property bool offSeason: events.length > 0 && currentIndex < 0
   readonly property bool loaded: events.length > 0 || teamRows.length > 0
-  readonly property bool stale: calendar.isStale || rankings.isStale
-  readonly property bool failed: !loaded && (calendar.status === "empty" || rankings.status === "empty")
-  readonly property double lastUpdatedAt: Math.max(calendar.lastSuccessAt, rankings.lastSuccessAt, results.lastSuccessAt)
+  readonly property bool stale: rankings.isStale
+  readonly property bool failed: !loaded && rankings.status === "empty"
+  readonly property double lastUpdatedAt: Math.max(rankings.lastSuccessAt, results.lastSuccessAt, players.lastSuccessAt)
 
   function refresh(force) {
-    calendar.fetch(force)
     rankings.fetch(force)
     results.fetch(force)
     players.fetch(force)
-  }
-
-  property CachedFetch calendar: CachedFetch {
-    id: calendar
-    name: "cs-seed-noop"
-    url: ""
   }
 
   property CachedFetch rankings: CachedFetch {

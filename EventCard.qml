@@ -8,6 +8,7 @@ Rectangle {
   property string subtitle: ""
   property string meta: ""
   property string countdown: ""
+  property string chipText: ""
   property color foreground: Color.foreground
   property string fontFamily: Style.font.family
 
@@ -24,14 +25,31 @@ Rectangle {
     anchors.verticalCenter: parent.verticalCenter
     spacing: Style.space(3)
 
-    Text {
+    Item {
       width: parent.width
-      text: root.title
-      color: root.foreground
-      font.family: root.fontFamily
-      font.pixelSize: Style.font.bodySmall
-      font.bold: true
-      elide: Text.ElideRight
+      height: title.implicitHeight
+      Text {
+        id: title
+        anchors.left: parent.left
+        anchors.right: chip.visible ? chip.left : parent.right
+        anchors.rightMargin: chip.visible ? Style.space(8) : 0
+        text: root.title
+        color: root.foreground
+        font.family: root.fontFamily
+        font.pixelSize: Style.font.bodySmall
+        font.bold: true
+        elide: Text.ElideRight
+      }
+      StatusChip {
+        id: chip
+        anchors.right: parent.right
+        anchors.verticalCenter: parent.verticalCenter
+        visible: root.chipText !== ""
+        text: root.chipText
+        tone: "accent"
+        foreground: root.foreground
+        fontFamily: root.fontFamily
+      }
     }
     Text {
       width: parent.width

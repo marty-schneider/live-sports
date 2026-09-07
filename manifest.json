@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "io.github.marty-schneider.live-sports",
   "name": "Live Sports",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": "Marty Schneider",
   "license": "MIT",
   "description": "One bar pill and dashboard for Counter-Strike Tier 1, Grand Sumo, and SRO GT World Challenge, with a sport switcher.",
@@ -26,7 +26,7 @@
       "csHighlightPlayer": "donk",
       "csHighlightTeam": "Spirit",
       "sumoHighlightPlayer": "Onosato",
-      "sumoHighlightTeam": "Yokozuna",
+      "sumoHighlightTeam": "Nishonoseki",
       "gtHighlightPlayer": "",
       "gtHighlightTeam": "Mercedes"
     },
@@ -103,7 +103,7 @@
         "key": "sumoHighlightTeam",
         "type": "string",
         "label": "Pinned sumo rank band",
-        "defaultValue": "Yokozuna"
+        "defaultValue": "Nishonoseki"
       },
       {
         "key": "gtHighlightPlayer",

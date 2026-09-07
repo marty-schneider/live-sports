@@ -112,6 +112,14 @@ function parsePlayerStats(raw) {
   return out
 }
 
+function utcDateString(ms) {
+  if (!SportsTime.isInstant(ms)) return ""
+  var d = new Date(ms)
+  var m = d.getUTCMonth() + 1
+  var day = d.getUTCDate()
+  return d.getUTCFullYear() + "-" + (m < 10 ? "0" + m : String(m)) + "-" + (day < 10 ? "0" + day : String(day))
+}
+
 function parseMatches(raw) {
   var rows = SportsModel.arrayOf(SportsModel.safeParse(raw))
   var out = []
@@ -122,19 +130,32 @@ function parseMatches(raw) {
     if (!isTier1(eventName)) continue
     var t1 = row.team1 && typeof row.team1 === "object" ? row.team1 : {}
     var t2 = row.team2 && typeof row.team2 === "object" ? row.team2 : {}
-    var startAt = SportsTime.parseIso(SportsModel.str(row.date) + "T16:00:00Z")
+    var date = SportsModel.str(row.date)
+    var startAt = SportsTime.parseIso(date + "T16:00:00Z")
+    var finished = !!(row.winner && row.winner.name)
     out.push({
       id: SportsModel.int(row.id, i),
       event: eventName,
       series: seriesOf(eventName),
+      date: date,
       startAt: startAt,
       bestOf: SportsModel.int(row.best_of, 3),
       team1: { id: SportsModel.int(t1.id), name: SportsModel.str(t1.name), score: SportsModel.int(t1.score, 0), rank: SportsModel.int(t1.rank) },
       team2: { id: SportsModel.int(t2.id), name: SportsModel.str(t2.name), score: SportsModel.int(t2.score, 0), rank: SportsModel.int(t2.rank) },
       maps: SportsModel.arrayOf(row.maps),
       winnerName: row.winner && row.winner.name ? SportsModel.str(row.winner.name) : "",
-      finished: !!(row.winner && row.winner.name)
+      finished: finished
     })
+  }
+  return out
+}
+
+function liveMatches(matches, nowMs) {
+  var today = utcDateString(nowMs)
+  var list = SportsModel.arrayOf(matches)
+  var out = []
+  for (var i = 0; i < list.length; i++) {
+    if (list[i].date === today && !list[i].finished) out.push(list[i])
   }
   return out
 }
@@ -180,6 +201,8 @@ if (typeof module !== "undefined") {
     parseRankings: parseRankings,
     parsePlayerStats: parsePlayerStats,
     parseMatches: parseMatches,
+    liveMatches: liveMatches,
+    utcDateString: utcDateString,
     parsePandaScoreRunning: parsePandaScoreRunning
   }
 }

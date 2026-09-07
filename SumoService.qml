@@ -15,6 +15,7 @@ QtObject {
   property var rikishi: []
   property var heyaRows: []
   property var torikumi: []
+  property var heyaMap: ({})
 
   readonly property string bashoId: {
     var d = new Date(now)
@@ -53,11 +54,14 @@ QtObject {
     return 15
   }
 
+  readonly property bool bashoUnderway: event !== null && now >= event.weekendStartAt
+
   function refresh(force) {
     basho.fetch(force)
     nextBasho.fetch(force)
     banzuke.fetch(force)
-    bouts.fetch(force)
+    stables.fetch(force)
+    if (bashoUnderway) bouts.fetch(force)
   }
 
   function absorbBasho(text, id) {
@@ -106,8 +110,22 @@ QtObject {
     onPayload: function(text) {
       var parsed = SumoModel.parseBanzuke(text)
       if (parsed.length > 0) {
-        root.rikishi = parsed
-        root.heyaRows = SumoModel.heyaStandings(parsed)
+        root.rikishi = SumoModel.applyHeya(parsed, root.heyaMap)
+        root.heyaRows = SumoModel.heyaStandings(root.rikishi)
+      }
+    }
+  }
+
+  property CachedFetch stables: CachedFetch {
+    id: stables
+    name: "sumo-rikishi-active"
+    url: "https://sumo-api.com/api/rikishis?intai=false&limit=150"
+    ttlSeconds: 24 * 3600
+    onPayload: function(text) {
+      root.heyaMap = SumoModel.parseRikishiList(text)
+      if (root.rikishi.length > 0) {
+        root.rikishi = SumoModel.applyHeya(root.rikishi, root.heyaMap)
+        root.heyaRows = SumoModel.heyaStandings(root.rikishi)
       }
     }
   }
