@@ -46,7 +46,7 @@ QtObject {
         root.statusLabel = "LIVE"
         root.statusKind = "live"
       } else {
-        root.liveReason = "No live CS match on the free feed. A PandaScore token in ~/.config/omarchy/live-sports/credentials unlocks round-by-round timing."
+        root.liveReason = "No live CS match on the free feed. A PandaScore token in ~/.config/omarchy/sports-tracker/credentials unlocks round-by-round timing."
         root.statusLabel = "WAITING"
         root.statusKind = "neutral"
       }
@@ -74,7 +74,7 @@ QtObject {
 
   property Process tokenProc: Process {
     command: ["sh", "-c",
-      'f="$HOME/.config/omarchy/live-sports/credentials"\n' +
+      'f="$HOME/.config/omarchy/sports-tracker/credentials"\n' +
       'if [ -f "$f" ] && grep -q "^pandascore_token=" "$f"; then echo yes; else echo no; fi']
     stdout: StdioCollector {
       waitForEnd: true
@@ -84,13 +84,13 @@ QtObject {
 
   property Process pollProc: Process {
     command: ["sh", "-c",
-      'f="$HOME/.config/omarchy/live-sports/credentials"\n' +
+      'f="$HOME/.config/omarchy/sports-tracker/credentials"\n' +
       'tok=$(sed -n "s/^pandascore_token=//p" "$f" | head -1)\n' +
       'hdr=$(mktemp)\n' +
       'chmod 600 "$hdr"\n' +
       'printf "Authorization: Bearer %s\\n" "$tok" > "$hdr"\n' +
       'curl -fsS --max-time 12 --proto "=https" -H @"$hdr" ' +
-      '-H "User-Agent: omarchy-live-sports/0.1" ' +
+      '-H "User-Agent: omarchy-sports-tracker/0.1" ' +
       '"https://api.pandascore.co/csgo/matches/running?per_page=1"\n' +
       'rc=$?\n' +
       'rm -f "$hdr"\n' +

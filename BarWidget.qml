@@ -7,7 +7,7 @@ import "SportsModel.js" as SportsModel
 
 BarWidget {
   id: root
-  moduleName: "io.github.marty-schneider.live-sports"
+  moduleName: "io.github.marty-schneider.sports-tracker"
 
   readonly property string label: panelLoader.item ? panelLoader.item.label : "CS ⋯"
   readonly property bool sessionLive: panelLoader.item ? panelLoader.item.sessionLive === true : false
@@ -33,8 +33,8 @@ BarWidget {
 
   function announce() {
     if (!root.bar || !panelLoader.item) return
-    var text = SportsModel.notificationArg(panelLoader.item.tooltipText, "Live Sports")
-    root.bar.run("omarchy-notification-send --app-name 'Live Sports' 'Live Sports' "
+    var text = SportsModel.notificationArg(panelLoader.item.tooltipText, "Sports Tracker")
+    root.bar.run("omarchy-notification-send --app-name 'Sports Tracker' 'Sports Tracker' "
       + Util.shellQuote(text))
   }
 
@@ -61,7 +61,7 @@ BarWidget {
   }
 
   IpcHandler {
-    target: "io.github.marty-schneider.live-sports.widget"
+    target: "io.github.marty-schneider.sports-tracker.widget"
     function refresh(): void { root.refresh() }
     function open(): void { root.open() }
     function close(): void { root.close() }
@@ -104,7 +104,7 @@ BarWidget {
     }
 
     Accessible.role: Accessible.Button
-    Accessible.name: "Live Sports"
-    Accessible.description: panelLoader.item ? panelLoader.item.tooltipText : "Live Sports dashboard"
+    Accessible.name: "Sports Tracker"
+    Accessible.description: panelLoader.item ? panelLoader.item.tooltipText : "Sports Tracker dashboard"
   }
 }

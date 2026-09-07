@@ -1,6 +1,6 @@
-# Live Sports for Omarchy
+# Sports Tracker for Omarchy
 
-**v0.2.0** — CS match cards, Sumo heya + bout list, GT continent filter, F1-style live empty states.
+**v0.3.0** — renamed Sports Tracker. Countdown pill, schedules, standings, and optional live feeds.
 
 One bar pill and dashboard for three sports, with a switcher so more sports can be added later:
 
@@ -15,17 +15,17 @@ This plugin is unofficial and is not associated with Valve, BLAST, ESL, the Niho
 ## Install
 
 ```sh
-omarchy plugin add https://github.com/marty-schneider/live-sports.git --enable
-omarchy bar move io.github.marty-schneider.live-sports --section left
+omarchy plugin add https://github.com/marty-schneider/sports-tracker.git --enable
+omarchy bar move io.github.marty-schneider.sports-tracker --section left
 ```
 
 From a local clone:
 
 ```sh
-git clone https://github.com/marty-schneider/live-sports.git
-cd live-sports
+git clone https://github.com/marty-schneider/sports-tracker.git
+cd sports-tracker
 ./install.sh --link
-omarchy plugin enable io.github.marty-schneider.live-sports
+omarchy plugin enable io.github.marty-schneider.sports-tracker
 ```
 
 ## Use
@@ -42,19 +42,19 @@ On the plugin’s `shell.json` entry:
 
 ```json
 {
-  "id": "io.github.marty-schneider.live-sports",
+  "id": "io.github.marty-schneider.sports-tracker",
   "defaultSport": "cs",
   "csHighlightPlayer": "donk",
   "csHighlightTeam": "Spirit",
   "sumoHighlightPlayer": "Onosato",
-  "sumoHighlightTeam": "Yokozuna",
+  "sumoHighlightTeam": "Nishonoseki",
   "gtHighlightTeam": "Mercedes",
   "notifications": true,
   "notifyLeadMinutes": "30,15"
 }
 ```
 
-Selected sport is also remembered in `~/.local/state/omarchy/live-sports/ui.json`.
+Selected sport is also remembered in `~/.local/state/omarchy/sports-tracker/ui.json`.
 
 ## Data sources
 
@@ -69,12 +69,12 @@ Nothing is hardcoded as “who is winning”. Rankings and results come from the
 ### Paid live (optional)
 
 ```sh
-mkdir -p ~/.config/omarchy/live-sports
-cat > ~/.config/omarchy/live-sports/credentials <<'EOF'
+mkdir -p ~/.config/omarchy/sports-tracker
+cat > ~/.config/omarchy/sports-tracker/credentials <<'EOF'
 pandascore_token=
 sro_timing=
 EOF
-chmod 600 ~/.config/omarchy/live-sports/credentials
+chmod 600 ~/.config/omarchy/sports-tracker/credentials
 ```
 
 Without those keys the live toggle still works: CS and GT explain that the feed needs credentials; Sumo shows the day’s torikumi.
@@ -83,10 +83,10 @@ Without those keys the live toggle still works: CS and GT explain that the feed 
 
 | Path | Contents |
 | --- | --- |
-| `~/.config/omarchy/plugins/io.github.marty-schneider.live-sports` | plugin |
-| `~/.cache/omarchy/live-sports` | cached API responses |
-| `~/.local/state/omarchy/live-sports` | notifications + last selected sport |
-| `~/.config/omarchy/live-sports/credentials` | optional live tokens, `0600` |
+| `~/.config/omarchy/plugins/io.github.marty-schneider.sports-tracker` | plugin |
+| `~/.cache/omarchy/sports-tracker` | cached API responses |
+| `~/.local/state/omarchy/sports-tracker` | notifications + last selected sport |
+| `~/.config/omarchy/sports-tracker/credentials` | optional live tokens, `0600` |
 
 ## Tests
 

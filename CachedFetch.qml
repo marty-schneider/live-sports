@@ -23,7 +23,7 @@ import Quickshell.Io
 QtObject {
   id: root
 
-  // Cache file name (without extension) under ~/.cache/omarchy/live-sports.
+  // Cache file name (without extension) under ~/.cache/omarchy/sports-tracker.
   property string name: ""
   property string url: ""
   property int ttlSeconds: 900
@@ -51,7 +51,7 @@ QtObject {
     if (fetchProc.running) return
     root.loading = true
     if (root.status === "idle") root.status = "loading"
-    fetchProc.command = ["sh", "-c", root.script, "omarchy-live-sports",
+    fetchProc.command = ["sh", "-c", root.script, "omarchy-sports-tracker",
       root.name, root.url,
       String(root.timeoutSeconds),
       String(force === true ? 0 : Math.max(0, root.ttlSeconds)),
@@ -73,7 +73,7 @@ QtObject {
   readonly property string script:
     'set -u\n' +
     'export LC_ALL=C\n' +
-    'dir="${XDG_CACHE_HOME:-$HOME/.cache}/omarchy/live-sports"\n' +
+    'dir="${XDG_CACHE_HOME:-$HOME/.cache}/omarchy/sports-tracker"\n' +
     'mkdir -p "$dir" || exit 1\n' +
     // The cache is this user's alone; nothing else has business in it.
     'chmod 700 "$dir" 2>/dev/null || true\n' +
@@ -153,7 +153,7 @@ QtObject {
     // complete answer and get cached as truncated JSON.
     'rc=$({ { curl -fsS -L --proto "=https" --proto-redir "=https" --max-redirs 3 \\\n' +
     '             --max-filesize "$max" --max-time "$timeout" \\\n' +
-    '             -H "User-Agent: omarchy-live-sports/0.1 (https://github.com/marty-schneider/live-sports)" "$url" -o - 2>/dev/null\n' +
+    '             -H "User-Agent: omarchy-sports-tracker/0.1 (https://github.com/marty-schneider/sports-tracker)" "$url" -o - 2>/dev/null\n' +
     '         printf "%s" "$?" >&3\n' +
     '       } | head -c "$(( max + 1 ))" >&4\n' +
     '     } 3>&1)\n' +

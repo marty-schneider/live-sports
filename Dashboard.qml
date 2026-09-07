@@ -10,8 +10,8 @@ import "GtColors.js" as GtColors
 
 Panel {
   id: root
-  moduleName: "io.github.marty-schneider.live-sports"
-  ipcTarget: "io.github.marty-schneider.live-sports"
+  moduleName: "io.github.marty-schneider.sports-tracker"
+  ipcTarget: "io.github.marty-schneider.sports-tracker"
   manageIpc: false
 
   property var anchorItem: null
@@ -148,7 +148,7 @@ Panel {
   }
 
   property FileView uiFile: FileView {
-    path: Quickshell.env("HOME") + "/.local/state/omarchy/live-sports/ui.json"
+    path: Quickshell.env("HOME") + "/.local/state/omarchy/sports-tracker/ui.json"
     atomicWrites: true
     printErrors: false
     onLoaded: root.loadUi(text())

@@ -13,11 +13,11 @@ QtObject {
   property var timeContext: ({ correctionMs: 0, hour12: false })
   property string leadMinutes: "30,15"
   property var sessionGroups: ["Race", "Match", "Makuuchi", "Qualifying", "Event"]
-  property string appName: "Live Sports"
+  property string appName: "Sports Tracker"
 
   property var fired: ({})
   property bool stateLoaded: false
-  readonly property string statePath: Quickshell.env("HOME") + "/.local/state/omarchy/live-sports/notified.json"
+  readonly property string statePath: Quickshell.env("HOME") + "/.local/state/omarchy/sports-tracker/notified.json"
 
   readonly property var leads: {
     var out = []
@@ -115,7 +115,7 @@ QtObject {
 
   property Process mkdirProc: Process {
     running: true
-    command: ["mkdir", "-p", Quickshell.env("HOME") + "/.local/state/omarchy/live-sports"]
+    command: ["mkdir", "-p", Quickshell.env("HOME") + "/.local/state/omarchy/sports-tracker"]
     onExited: stateFile.reload()
   }
 

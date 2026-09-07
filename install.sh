@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Install Live Sports into the Omarchy shell.
+# Install Sports Tracker into the Omarchy shell.
 #
 #   ./install.sh              copy into ~/.config/omarchy/plugins
 #   ./install.sh --link       symlink for development
@@ -8,11 +8,11 @@
 
 set -euo pipefail
 
-id="io.github.marty-schneider.live-sports"
+id="io.github.marty-schneider.sports-tracker"
 source_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 target_dir="${XDG_CONFIG_HOME:-$HOME/.config}/omarchy/plugins/$id"
-cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/omarchy/live-sports"
-state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/omarchy/live-sports"
+cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/omarchy/sports-tracker"
+state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/omarchy/sports-tracker"
 mode="copy"
 keep_data="no"
 

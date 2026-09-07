@@ -47,7 +47,7 @@ if (process.argv.includes("--refresh")) {
   fs.mkdirSync(FIXTURES, { recursive: true })
   for (const [name, url] of Object.entries(SOURCES)) {
     process.stdout.write(`fetching ${name} … `)
-    const body = execFileSync("curl", ["-fsS", "--max-time", "30", "-A", "omarchy-live-sports/0.1", url], { maxBuffer: 1 << 24 })
+    const body = execFileSync("curl", ["-fsS", "--max-time", "30", "-A", "omarchy-sports-tracker/0.1", url], { maxBuffer: 1 << 24 })
     fs.writeFileSync(path.join(FIXTURES, name), body)
     console.log(`${body.length} bytes`)
   }

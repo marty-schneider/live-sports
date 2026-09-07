@@ -20,7 +20,7 @@ QtObject {
   readonly property string sessionName: scheduledSession ? scheduledSession.name : ""
   readonly property string statusLabel: "NO FEED"
   readonly property string statusKind: "warn"
-  readonly property string liveReason: "Live GT timing needs SRO/Swiss Timing credentials in ~/.config/omarchy/live-sports/credentials (sro_timing=…)."
+  readonly property string liveReason: "Live GT timing needs SRO/Swiss Timing credentials in ~/.config/omarchy/sports-tracker/credentials (sro_timing=…)."
   readonly property int currentLap: 0
   readonly property int totalLaps: 0
 
@@ -31,7 +31,7 @@ QtObject {
 
   property Process checkProc: Process {
     command: ["sh", "-c",
-      'f="$HOME/.config/omarchy/live-sports/credentials"\n' +
+      'f="$HOME/.config/omarchy/sports-tracker/credentials"\n' +
       'if [ -f "$f" ] && grep -q "^sro_timing=" "$f"; then echo yes; else echo no; fi']
     stdout: StdioCollector { waitForEnd: true }
   }
