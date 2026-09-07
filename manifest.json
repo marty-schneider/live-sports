@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.marty-schneider.live-sports",
+  "name": "Live Sports",
+  "version": "0.1.0",
+  "author": "Marty Schneider",
+  "license": "MIT",
+  "description": "One bar pill and dashboard for Counter-Strike Tier 1, Grand Sumo, and SRO GT World Challenge, with a sport switcher.",
+  "kinds": ["bar-widget"],
+  "entryPoints": { "barWidget": "BarWidget.qml" },
+  "barWidget": {
+    "displayName": "Live Sports",
+    "description": "CS2, Sumo, and GT World Challenge in one Omarchy panel. Countdown pill, local-time schedule, pinned player and team, live scaffold.",
+    "category": "Info",
+    "aliases": ["cs", "cs2", "sumo", "gt", "gtworld", "sports"],
+    "allowMultiple": false,
+    "defaultSection": "left",
+    "defaults": {
+      "timeFormat": "24-hour",
+      "autoLive": true,
+      "liveRefreshSec": 12,
+      "refreshMinutes": 15,
+      "notifications": true,
+      "notifyLeadMinutes": "30,15",
+      "defaultSport": "cs",
+      "csHighlightPlayer": "donk",
+      "csHighlightTeam": "Spirit",
+      "sumoHighlightPlayer": "Onosato",
+      "sumoHighlightTeam": "Yokozuna",
+      "gtHighlightPlayer": "",
+      "gtHighlightTeam": "Mercedes"
+    },
+    "schema": [
+      {
+        "key": "timeFormat",
+        "type": "enum",
+        "label": "Time format",
+        "options": ["24-hour", "12-hour"],
+        "defaultValue": "24-hour"
+      },
+      {
+        "key": "defaultSport",
+        "type": "enum",
+        "label": "Default sport",
+        "options": ["cs", "sumo", "gt"],
+        "defaultValue": "cs"
+      },
+      {
+        "key": "autoLive",
+        "type": "boolean",
+        "label": "Switch to live mode automatically",
+        "defaultValue": true
+      },
+      {
+        "key": "liveRefreshSec",
+        "type": "integer",
+        "label": "Live refresh interval (seconds)",
+        "min": 5,
+        "max": 120,
+        "step": 1,
+        "defaultValue": 12
+      },
+      {
+        "key": "refreshMinutes",
+        "type": "integer",
+        "label": "Standings refresh interval (minutes)",
+        "min": 5,
+        "max": 720,
+        "step": 5,
+        "defaultValue": 15
+      },
+      {
+        "key": "notifications",
+        "type": "boolean",
+        "label": "Desktop notifications",
+        "defaultValue": true
+      },
+      {
+        "key": "notifyLeadMinutes",
+        "type": "string",
+        "label": "Notify this many minutes before",
+        "defaultValue": "30,15"
+      },
+      {
+        "key": "csHighlightPlayer",
+        "type": "string",
+        "label": "Pinned CS player",
+        "defaultValue": "donk"
+      },
+      {
+        "key": "csHighlightTeam",
+        "type": "string",
+        "label": "Pinned CS team",
+        "defaultValue": "Spirit"
+      },
+      {
+        "key": "sumoHighlightPlayer",
+        "type": "string",
+        "label": "Pinned rikishi",
+        "defaultValue": "Onosato"
+      },
+      {
+        "key": "sumoHighlightTeam",
+        "type": "string",
+        "label": "Pinned sumo rank band",
+        "defaultValue": "Yokozuna"
+      },
+      {
+        "key": "gtHighlightPlayer",
+        "type": "string",
+        "label": "Pinned GT driver",
+        "defaultValue": ""
+      },
+      {
+        "key": "gtHighlightTeam",
+        "type": "string",
+        "label": "Pinned GT manufacturer/team",
+        "defaultValue": "Mercedes"
+      }
+    ]
+  }
+}
