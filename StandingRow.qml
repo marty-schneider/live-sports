@@ -28,99 +28,97 @@ Rectangle {
   property string fontFamily: Style.font.family
   signal clicked()
 
-  implicitHeight: Math.max(content.implicitHeight, note.visible ? note.implicitHeight : 0) + Style.space(9)
+  implicitHeight: body.height + Style.space(9)
   radius: Math.max(2, Style.cornerRadius)
-  // A pinned row is the one exception to the flat list, because its whole
-  // purpose is to be findable at a glance somewhere it does not belong.
   color: pinned ? Util.alpha(Color.accent, 0.10) : "transparent"
   border.width: pinned ? Math.max(1, Style.normalBorderWidth) : 0
   border.color: Util.alpha(Color.accent, 0.35)
 
-  Row {
-    id: content
+  Item {
+    id: body
     anchors.left: parent.left
+    anchors.right: parent.right
     anchors.leftMargin: Style.space(10)
+    anchors.rightMargin: Style.space(10)
     anchors.verticalCenter: parent.verticalCenter
-    spacing: Style.space(10)
+    height: Math.max(leftCol.implicitHeight, values.implicitHeight)
 
-    Text {
-      width: Style.space(24)
+    Row {
+      id: leftCol
+      anchors.left: parent.left
+      anchors.right: values.left
+      anchors.rightMargin: Style.space(12)
       anchors.verticalCenter: parent.verticalCenter
-      text: root.positionPrefix + root.position
-      color: root.position === 1 ? root.foreground : Qt.darker(root.foreground, 1.7)
-      font.family: root.fontFamily
-      font.pixelSize: Style.font.bodySmall
-      font.bold: root.position === 1
-    }
+      spacing: Style.space(10)
 
-    // Livery marker. Purely supplementary to the team name printed below.
-    Rectangle {
-      anchors.verticalCenter: parent.verticalCenter
-      width: Style.space(3)
-      height: Style.space(16)
-      radius: width / 2
-      color: root.teamColor
-      visible: root.showTeam
-    }
+      Text {
+        width: Style.space(28)
+        anchors.verticalCenter: parent.verticalCenter
+        text: root.positionPrefix === "" ? "" : root.positionPrefix + root.position
+        color: root.position === 1 ? root.foreground : Qt.darker(root.foreground, 1.7)
+        font.family: root.fontFamily
+        font.pixelSize: Style.font.bodySmall
+        font.bold: root.position === 1
+      }
 
-    Column {
-      anchors.verticalCenter: parent.verticalCenter
-      spacing: Style.space(2)
+      Rectangle {
+        anchors.verticalCenter: parent.verticalCenter
+        width: Style.space(3)
+        height: Style.space(16)
+        radius: width / 2
+        color: root.teamColor
+        visible: root.showTeam
+      }
 
-      Row {
-        spacing: Style.space(8)
+      Column {
+        width: Math.max(0, leftCol.width - Style.space(28) - (root.showTeam ? Style.space(13) : 0) - leftCol.spacing * (root.showTeam ? 2 : 1))
+        anchors.verticalCenter: parent.verticalCenter
+        spacing: Style.space(2)
 
         Text {
-          text: root.name
+          width: parent.width
+          text: root.name + (root.code !== "" ? "  " + root.code : "")
           color: root.foreground
           font.family: root.fontFamily
           font.pixelSize: Style.font.bodySmall
+          elide: Text.ElideRight
         }
 
         Text {
-          visible: root.code !== ""
-          text: root.code
-          color: Qt.darker(root.foreground, 1.9)
+          width: parent.width
+          visible: root.showTeam && root.teamName !== ""
+          text: root.teamName
+          color: Qt.darker(root.foreground, 1.7)
           font.family: root.fontFamily
           font.pixelSize: Style.font.caption
-          font.letterSpacing: 0.6
-          anchors.verticalCenter: parent.verticalCenter
+          elide: Text.ElideRight
         }
+      }
+    }
+
+    Column {
+      id: values
+      anchors.right: parent.right
+      anchors.verticalCenter: parent.verticalCenter
+      spacing: Style.space(2)
+
+      Text {
+        anchors.right: parent.right
+        text: root.valueText
+        color: root.foreground
+        font.family: root.fontFamily
+        font.pixelSize: Style.font.bodySmall
+        font.bold: root.pinned || root.position === 1
       }
 
       Text {
-        visible: root.showTeam && root.teamName !== ""
-        text: root.teamName
-        color: Qt.darker(root.foreground, 1.7)
+        anchors.right: parent.right
+        visible: root.noteText !== ""
+        text: root.noteText
+        color: root.pinned ? Color.accent : Qt.darker(root.foreground, 1.8)
         font.family: root.fontFamily
         font.pixelSize: Style.font.caption
       }
-    }
-  }
-
-  Column {
-    anchors.right: parent.right
-    anchors.rightMargin: Style.space(10)
-    anchors.verticalCenter: parent.verticalCenter
-    spacing: Style.space(2)
-
-    Text {
-      anchors.right: parent.right
-      text: root.valueText
-      color: root.foreground
-      font.family: root.fontFamily
-      font.pixelSize: Style.font.bodySmall
-      font.bold: root.pinned || root.position === 1
-    }
-
-    Text {
-      id: note
-      anchors.right: parent.right
-      visible: root.noteText !== ""
-      text: root.noteText
-      color: root.pinned ? Color.accent : Qt.darker(root.foreground, 1.8)
-      font.family: root.fontFamily
-      font.pixelSize: Style.font.caption
     }
   }
 

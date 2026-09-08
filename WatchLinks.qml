@@ -24,14 +24,15 @@ Item {
   readonly property string updatesUrl: infoUrl !== "" ? infoUrl : (info && info.updates ? String(info.updates.url || "") : "")
 
   visible: onAir !== "" || watchUrl !== "" || updatesUrl !== ""
-  implicitHeight: visible ? row.implicitHeight : 0
-  implicitWidth: row.implicitWidth
+  implicitHeight: visible ? flow.implicitHeight : 0
+  implicitWidth: parent ? parent.width : flow.implicitWidth
 
   property real leftPadding: 0
 
-  Row {
-    id: row
+  Flow {
+    id: flow
     x: root.leftPadding
+    width: Math.max(0, root.width - root.leftPadding)
     spacing: Style.space(14)
 
     Text {

@@ -286,13 +286,14 @@ Panel {
         name: name,
         position: standing ? standing.position : 0,
         valueText: standing ? (sportId === "sumo" ? standing.record : standingValue(standing)) : "",
+        teamName: standing ? (standing.rank || standing.heya || "") : "",
         next: SportsModel.nextFavoriteMatch(matches, [name], now)
       })
     }
     for (var i = 0; i < names.length; i++) {
       var matched = false
       for (var r = 0; r < rows.length; r++) {
-        if (SportsModel.involvesTeam(rows[r], [names[i]])) {
+        if (SportsModel.namedIn(rows[r], [names[i]])) {
           add(rows[r], names[i])
           matched = true
         }
@@ -488,7 +489,6 @@ Panel {
       if (defaultSport === "auto" || sports.indexOf(defaultSport) >= 0) sportLock = defaultSport
       favorites = SportsModel.seedFavorites({}, [
         { sport: "cs", name: csPinTeam },
-        { sport: "sumo", name: sumoPinTeam },
         { sport: "gt", name: gtPinTeam }
       ])
       return
@@ -508,7 +508,6 @@ Panel {
     var fav = parsed.favorites && typeof parsed.favorites === "object" ? parsed.favorites : {}
     var seeds = []
     if (csPinTeam) seeds.push({ sport: "cs", name: csPinTeam })
-    if (sumoPinTeam) seeds.push({ sport: "sumo", name: sumoPinTeam })
     if (gtPinTeam) seeds.push({ sport: "gt", name: gtPinTeam })
     var leaguePins = pins.leagues || {}
     for (var sportId in leaguePins) {
@@ -516,6 +515,7 @@ Panel {
         seeds.push({ sport: sportId, name: leaguePins[sportId].team })
     }
     favorites = SportsModel.seedFavorites(fav, seeds)
+    if (sumoPinTeam) favorites = SportsModel.pruneFavorites(favorites, "sumo", [sumoPinTeam])
   }
 
   property FileView uiFile: FileView {
@@ -1119,6 +1119,7 @@ Panel {
           }
         }
         WatchLinks {
+          width: parent.width
           info: SportsWatch.forSport(root.viewedSport)
           broadcasts: event && event.broadcasts ? event.broadcasts : []
           infoUrl: event && event.infoUrl ? event.infoUrl : ""
@@ -1147,7 +1148,8 @@ Panel {
             position: modelData.position
             positionPrefix: modelData.position ? "P" : ""
             name: modelData.name
-            showTeam: false
+            showTeam: root.viewedSport === "sumo" && !!modelData.teamName
+            teamName: modelData.teamName || ""
             teamColor: CsColors.colorFor(modelData.name)
             valueText: modelData.valueText
             noteText: {
@@ -1349,12 +1351,15 @@ Panel {
             position: modelData.position
             name: modelData.name
             code: modelData.code || ""
-            teamName: modelData.teamName || modelData.rank || ""
+            teamName: modelData.rank || modelData.heya || modelData.teamName || ""
+            showTeam: true
             teamColor: root.viewedSport === "gt" ? GtColors.colorFor(modelData.teamName) : CsColors.colorFor(modelData.teamName || modelData.name)
             valueText: root.viewedSport === "sumo" ? modelData.record
               : root.viewedSport === "cs" ? Number(modelData.points).toFixed(2)
               : String(modelData.points) + " pts"
-            noteText: root.viewedSport === "cs" && modelData.adr ? Math.round(modelData.adr) + " ADR" : (modelData.rank || "")
+            noteText: root.viewedSport === "cs" && modelData.adr ? Math.round(modelData.adr) + " ADR"
+              : root.viewedSport === "sumo" ? ""
+              : (modelData.rank || "")
             clickable: true
             pinned: root.viewedSport === "sumo"
               ? root.isTeamFavorite("sumo", modelData.name) || SportsModel.matchPin(modelData, root.sumoPinPlayer)
@@ -1424,7 +1429,7 @@ Panel {
             teamColor: CsColors.colorFor(modelData.name)
             valueText: root.standingValue(modelData)
             noteText: root.viewedSport === "cs" ? (modelData.note || "") : ""
-            clickable: true
+            clickable: root.viewedSport !== "sumo"
             pinned: root.isTeamFavorite(root.viewedSport, modelData.name)
             onClicked: root.toggleFavorite(root.viewedSport, modelData.name)
             foreground: root.fg
@@ -1442,7 +1447,7 @@ Panel {
             teamColor: CsColors.colorFor(modelData.name)
             valueText: root.standingValue(modelData)
             noteText: "FAV"
-            clickable: true
+            clickable: root.viewedSport !== "sumo"
             pinned: true
             onClicked: root.toggleFavorite(root.viewedSport, modelData.name)
             foreground: root.fg
@@ -1539,6 +1544,7 @@ Panel {
           }
         }
         WatchLinks {
+          width: parent.width
           leftPadding: Style.space(4)
           info: SportsWatch.forSport(root.viewedSport)
           broadcasts: root.sport.event && root.sport.event.broadcasts ? root.sport.event.broadcasts : []

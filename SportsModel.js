@@ -221,8 +221,35 @@ function favoritesOf(map, sportId) {
   return arrayOf(map[sportId])
 }
 
+function namedIn(row, names) {
+  var want = arrayOf(names)
+  if (!row) return false
+  for (var i = 0; i < want.length; i++) {
+    if (nameMatches(row.name, want[i]) || nameMatches(row.shikona, want[i])) return true
+  }
+  return false
+}
+
 function isFavorite(map, sportId, name) {
-  return involvesTeam({ name: name }, favoritesOf(map, sportId))
+  return namedIn({ name: name }, favoritesOf(map, sportId))
+}
+
+function pruneFavorites(map, sportId, dropNames) {
+  var next = {}
+  var src = map && typeof map === "object" ? map : {}
+  for (var k in src) next[k] = arrayOf(src[k]).slice()
+  var drop = arrayOf(dropNames)
+  var list = arrayOf(next[sportId])
+  var kept = []
+  for (var i = 0; i < list.length; i++) {
+    var skip = false
+    for (var d = 0; d < drop.length; d++) {
+      if (str(list[i]).toLowerCase() === str(drop[d]).toLowerCase()) skip = true
+    }
+    if (!skip) kept.push(list[i])
+  }
+  next[sportId] = kept
+  return next
 }
 
 function toggleFavorite(map, sportId, name) {
@@ -329,7 +356,7 @@ function standingsWithFavorites(standings, topCount, names) {
   var extras = []
   var want = arrayOf(names)
   for (var i = 0; i < list.length; i++) {
-    if (!involvesTeam(list[i], want)) continue
+    if (!namedIn(list[i], want)) continue
     var inTop = false
     for (var t = 0; t < top.length; t++) {
       if (top[t] === list[i] || (top[t].id && list[i].id && top[t].id === list[i].id) || top[t].name === list[i].name)
@@ -403,6 +430,8 @@ if (typeof module !== "undefined") {
     involvesTeam: involvesTeam,
     favoritesOf: favoritesOf,
     isFavorite: isFavorite,
+    namedIn: namedIn,
+    pruneFavorites: pruneFavorites,
     toggleFavorite: toggleFavorite,
     seedFavorites: seedFavorites,
     pickTrackedEvent: pickTrackedEvent,

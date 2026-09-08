@@ -135,6 +135,9 @@ const favTable = SportsModel.standingsWithFavorites([
 ], 5, ["Spirit"])
 assert("favorite outside top 5 is an extra row", favTable.extras.length === 1 && favTable.extras[0].name === "Spirit")
 assert("seed favorites from old pins", SportsModel.favoritesOf(SportsModel.seedFavorites({}, [{ sport: "cs", name: "Spirit" }]), "cs").join(",") === "Spirit")
+assert("prune drops leftover heya favorite", SportsModel.favoritesOf(SportsModel.pruneFavorites({
+  sumo: ["Nishonoseki", "Aonishiki"]
+}, "sumo", ["Nishonoseki"]), "sumo").join(",") === "Aonishiki")
 assert("day countdown today", SportsTime.dayCountdown(0, 0, SportsTime.defaultContext()) === "today")
 assert("day countdown future", SportsTime.dayCountdown(3 * SportsTime.DAY, 0, SportsTime.defaultContext()) === "3d")
 
