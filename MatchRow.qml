@@ -117,7 +117,7 @@ Rectangle {
         var bits = []
         if (root.live) bits.push("LIVE")
         if (root.match.event) bits.push(root.match.event)
-        if (root.match.bestOf) bits.push("BO" + root.match.bestOf)
+        if (root.match.bestOf > 1) bits.push("BO" + root.match.bestOf)
         return bits.join(" · ")
       }
       color: root.live ? Color.urgent : Qt.darker(root.foreground, 1.9)

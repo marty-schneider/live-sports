@@ -1,16 +1,18 @@
 # Sports Tracker for Omarchy
 
-**v0.4.0** — auto-sport pill, event-name countdown, click-to-pin, quieter notifications. Clocks only when a feed actually has a time.
+**v0.5.0** — NFL, NBA, MLB, NHL, Premier League, Serie A, Ligue 1, and La Liga, using ESPN kickoff times when the feed marks them valid.
 
-One bar pill and dashboard for three sports, with a switcher so more sports can be added later:
+One bar pill and dashboard, with a switcher so more sports can be added later:
 
 - **Counter-Strike** — Valve Majors and RMRs, BLAST Open / Premier / Bounty / Rivals, ESL Pro League, IEM
+- **NFL, NBA, MLB, NHL** — ESPN scoreboard and standings
+- **Premier League, Serie A, Ligue 1, La Liga** — ESPN scoreboard/standings, next fixtures from TheSportsDB when ESPN only has the current matchday
 - **Grand Sumo** — honbasho, Makuuchi only
 - **GT World Challenge** — SRO, all continents (Europe, America, Asia, Australia)
 
 Shaped after [F1 Live](https://github.com/marconn01/live-f1): countdown pill, local-time schedule, pinned player *and* team, notifications, disk cache, live mode.
 
-This plugin is unofficial and is not associated with Valve, BLAST, ESL, the Nihon Sumo Kyokai, or SRO Motorsports Group.
+This plugin is unofficial and is not associated with Valve, BLAST, ESL, the NFL, NBA, MLB, NHL, the Premier League, Serie A, Ligue 1, La Liga, the Nihon Sumo Kyokai, SRO Motorsports Group, ESPN, or TheSportsDB.
 
 ## Install
 
@@ -30,13 +32,13 @@ omarchy plugin enable io.github.marty-schneider.sports-tracker
 
 ## Use
 
-The pill follows whatever is next (or on now) unless you lock a sport with AUTO / CS2 / SUMO / GT. It shows the event, not the sport: `EPL 26d`, `AKI 6d`, `ZAND 11d`.
+The pill follows whatever is next (or on now) unless you lock a sport with the chips. It shows the event, not the sport: `EPL 5d`, `NFL 2d`, `AKI 6d`, `ZAND 11d`.
 
 Click a player, team, rikishi, or heya to pin it. Notifications fire for the sport on the pill, plus any sport you have a pin in.
 
-Live mode only appears when there is something on — today’s unfinished CS maps, or a published Sumo card. No empty tower.
+Live mode only appears when there is something on — in-progress games on the ESPN scoreboard, today’s unfinished CS maps, or a published Sumo card. No empty tower.
 
-On GT, EU / AM / AS / AU filters the calendar. `0` auto, `1` `2` `3` lock a sport, `r` refreshes, Escape closes.
+On GT, EU / AM / AS / AU filters the calendar. `0` auto, chips lock a sport, `r` refreshes, Escape closes.
 
 Right-click the pill to announce the next session. Middle-click forces a refresh.
 
@@ -65,6 +67,8 @@ Selected sport is also remembered in `~/.local/state/omarchy/sports-tracker/ui.j
 | Sport | Calendar / results | Live |
 | --- | --- | --- |
 | CS2 | [csapi.de](https://api.csapi.de) (VRS rankings, recent matches, player ratings) plus a shipped Tier 1 calendar | Optional [PandaScore](https://developers.pandascore.co) token |
+| NFL / NBA / MLB / NHL | [ESPN public JSON](https://site.api.espn.com) scoreboard + standings. Kickoff only if `timeValid`. Next fixture from [TheSportsDB](https://www.thesportsdb.com) when the ESPN board is only finished games | In-progress games on the scoreboard |
+| EPL / Serie A / Ligue 1 / La Liga | ESPN scoreboard + table; next fixture from TheSportsDB (`strTimestamp` treated as UTC) when ESPN only has the current matchday | In-progress games on the scoreboard |
 | Sumo | [sumo-api.com](https://www.sumo-api.com) basho, Makuuchi banzuke, daily torikumi | Free — today’s card fills in as bouts complete |
 | GT | Shipped 2026 SRO calendar (Europe Sprint + Endurance, America, Asia, Australia) | Optional SRO / Swiss Timing credentials |
 

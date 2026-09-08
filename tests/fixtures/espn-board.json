@@ -1,0 +1,35 @@
+{
+  "events": [
+    {
+      "id": "401",
+      "date": "2026-09-10T00:20Z",
+      "name": "New England Patriots at Seattle Seahawks",
+      "status": { "type": { "state": "pre", "completed": false } },
+      "competitions": [
+        {
+          "timeValid": true,
+          "venue": { "fullName": "Lumen Field" },
+          "competitors": [
+            { "homeAway": "home", "score": "0", "team": { "id": "26", "displayName": "Seattle Seahawks", "abbreviation": "SEA" } },
+            { "homeAway": "away", "score": "0", "team": { "id": "17", "displayName": "New England Patriots", "abbreviation": "NE" } }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "402",
+      "date": "2026-09-07T17:00Z",
+      "name": "Finished Game",
+      "status": { "type": { "state": "post", "completed": true } },
+      "competitions": [
+        {
+          "timeValid": true,
+          "competitors": [
+            { "homeAway": "home", "score": "24", "team": { "id": "1", "displayName": "Buffalo Bills", "abbreviation": "BUF" } },
+            { "homeAway": "away", "score": "17", "team": { "id": "2", "displayName": "Miami Dolphins", "abbreviation": "MIA" } }
+          ]
+        }
+      ]
+    }
+  ]
+}

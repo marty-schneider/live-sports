@@ -10,6 +10,7 @@ QtObject {
   property int refreshMinutes: 15
   property string highlightPlayer: ""
   property string highlightTeam: ""
+  readonly property string title: "Counter-Strike"
 
   property var events: []
   property var teamRows: []

@@ -153,7 +153,7 @@ QtObject {
     // complete answer and get cached as truncated JSON.
     'rc=$({ { curl -fsS -L --proto "=https" --proto-redir "=https" --max-redirs 3 \\\n' +
     '             --max-filesize "$max" --max-time "$timeout" \\\n' +
-    '             -H "User-Agent: omarchy-sports-tracker/0.1 (https://github.com/marty-schneider/sports-tracker)" "$url" -o - 2>/dev/null\n' +
+    '             -H "User-Agent: Mozilla/5.0 (compatible; omarchy-sports-tracker/0.4; +https://github.com/marty-schneider/sports-tracker)" "$url" -o - 2>/dev/null\n' +
     '         printf "%s" "$?" >&3\n' +
     '       } | head -c "$(( max + 1 ))" >&4\n' +
     '     } 3>&1)\n' +

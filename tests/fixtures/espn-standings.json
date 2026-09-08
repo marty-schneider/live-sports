@@ -1,0 +1,27 @@
+{
+  "name": "NFL",
+  "children": [
+    {
+      "standings": {
+        "entries": [
+          {
+            "team": { "id": 2, "displayName": "Buffalo Bills", "abbreviation": "BUF" },
+            "stats": [
+              { "name": "wins", "abbreviation": "W", "value": 1, "displayValue": "1" },
+              { "name": "losses", "abbreviation": "L", "value": 0, "displayValue": "0" },
+              { "name": "overall", "displayValue": "1-0" }
+            ]
+          },
+          {
+            "team": { "id": 3, "displayName": "Miami Dolphins", "abbreviation": "MIA" },
+            "stats": [
+              { "name": "wins", "abbreviation": "W", "value": 0, "displayValue": "0" },
+              { "name": "losses", "abbreviation": "L", "value": 1, "displayValue": "1" },
+              { "name": "overall", "displayValue": "0-1" }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

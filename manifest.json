@@ -2,17 +2,17 @@
   "schemaVersion": 1,
   "id": "io.github.marty-schneider.sports-tracker",
   "name": "Sports Tracker",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "author": "Marty Schneider",
   "license": "MIT",
-  "description": "Sports Tracker: Counter-Strike Tier 1, Grand Sumo, and SRO GT World Challenge in one Omarchy bar panel.",
+  "description": "Sports Tracker: CS2, NFL, NBA, MLB, NHL, Premier League, Serie A, Ligue 1, La Liga, Sumo, and GT World Challenge.",
   "kinds": ["bar-widget"],
   "entryPoints": { "barWidget": "BarWidget.qml" },
   "barWidget": {
     "displayName": "Sports Tracker",
-    "description": "CS2, Sumo, and GT World Challenge in one Omarchy panel. Countdown pill, local-time schedule, pinned player and team.",
+    "description": "CS2, NFL, NBA, MLB, NHL, Premier League, Serie A, Ligue 1, La Liga, Sumo, and GT World Challenge. Countdown pill, local-time schedule, pinned player and team.",
     "category": "Info",
-    "aliases": ["cs", "cs2", "sumo", "gt", "gtworld", "sports", "sports-tracker", "tracker"],
+    "aliases": ["cs", "cs2", "nfl", "nba", "mlb", "nhl", "epl", "premier", "seriea", "ligue1", "laliga", "sumo", "gt", "gtworld", "sports", "sports-tracker", "tracker"],
     "allowMultiple": false,
     "defaultSection": "left",
     "defaults": {
@@ -42,7 +42,7 @@
         "key": "defaultSport",
         "type": "enum",
         "label": "Default sport",
-        "options": ["auto", "cs", "sumo", "gt"],
+        "options": ["auto", "cs", "nfl", "nba", "mlb", "nhl", "epl", "seriea", "ligue1", "laliga", "sumo", "gt"],
         "defaultValue": "auto"
       },
       {

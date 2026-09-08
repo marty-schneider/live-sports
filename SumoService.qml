@@ -10,6 +10,7 @@ QtObject {
   property int refreshMinutes: 15
   property string highlightPlayer: ""
   property string highlightTeam: ""
+  readonly property string title: "Grand Sumo"
 
   property var events: []
   property var rikishi: []
@@ -39,6 +40,7 @@ QtObject {
   readonly property var playerStandings: SportsModel.standingsWithPin(rikishi, 5, highlightPlayer)
   readonly property var teamStandings: SportsModel.standingsWithPin(heyaRows, 5, highlightTeam)
   readonly property var recent: []
+  readonly property var liveMatches: torikumi
   readonly property int daysLeft: SumoModel.remainingDays(event, now)
   readonly property var yusho: SumoModel.yushoRace(rikishi, daysLeft)
   readonly property var schedule: SumoModel.visibleDays(event, now, 3)

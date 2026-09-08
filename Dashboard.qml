@@ -41,7 +41,23 @@ Panel {
 
   property string sportLock: "auto"
   property string gtContinent: "all"
-  readonly property var sports: ["cs", "sumo", "gt"]
+  property var pins: ({})
+  readonly property var sportIds: ["cs", "nfl", "nba", "mlb", "nhl", "epl", "seriea", "ligue1", "laliga", "sumo", "gt"]
+  readonly property var sports: sportIds
+  readonly property var sportChips: [
+    { id: "auto", label: "AUTO" },
+    { id: "cs", label: "CS2" },
+    { id: "nfl", label: "NFL" },
+    { id: "nba", label: "NBA" },
+    { id: "mlb", label: "MLB" },
+    { id: "nhl", label: "NHL" },
+    { id: "epl", label: "EPL" },
+    { id: "seriea", label: "SERIE A" },
+    { id: "ligue1", label: "LIGUE 1" },
+    { id: "laliga", label: "LA LIGA" },
+    { id: "sumo", label: "SUMO" },
+    { id: "gt", label: "GT" }
+  ]
 
   readonly property double now: timeSvc.now
   readonly property var timeCtx: timeSvc.context
@@ -84,16 +100,125 @@ Panel {
     continentFilter: root.gtContinent
   }
 
+  property LeagueService nfl: LeagueService {
+    sportId: "nfl"; title: "NFL"; shortName: "NFL"; durationMin: 210
+    now: root.now; refreshMinutes: root.refreshMinutes
+    highlightTeam: root.pinOf("nfl", "team"); highlightPlayer: root.pinOf("nfl", "player")
+    scoreboardUrl: "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard"
+    standingsUrl: "https://site.api.espn.com/apis/v2/sports/football/nfl/standings"
+    nextUrl: "https://www.thesportsdb.com/api/v1/json/3/eventsnextleague.php?id=4391"
+  }
+  property LeagueService nba: LeagueService {
+    sportId: "nba"; title: "NBA"; shortName: "NBA"; durationMin: 150
+    now: root.now; refreshMinutes: root.refreshMinutes
+    highlightTeam: root.pinOf("nba", "team"); highlightPlayer: root.pinOf("nba", "player")
+    scoreboardUrl: "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard"
+    standingsUrl: "https://site.api.espn.com/apis/v2/sports/basketball/nba/standings"
+    nextUrl: "https://www.thesportsdb.com/api/v1/json/3/eventsnextleague.php?id=4387"
+  }
+  property LeagueService mlb: LeagueService {
+    sportId: "mlb"; title: "MLB"; shortName: "MLB"; durationMin: 210
+    now: root.now; refreshMinutes: root.refreshMinutes
+    highlightTeam: root.pinOf("mlb", "team"); highlightPlayer: root.pinOf("mlb", "player")
+    scoreboardUrl: "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard"
+    standingsUrl: "https://site.api.espn.com/apis/v2/sports/baseball/mlb/standings"
+    nextUrl: "https://www.thesportsdb.com/api/v1/json/3/eventsnextleague.php?id=4424"
+  }
+  property LeagueService nhl: LeagueService {
+    sportId: "nhl"; title: "NHL"; shortName: "NHL"; durationMin: 150
+    now: root.now; refreshMinutes: root.refreshMinutes
+    highlightTeam: root.pinOf("nhl", "team"); highlightPlayer: root.pinOf("nhl", "player")
+    scoreboardUrl: "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard"
+    standingsUrl: "https://site.api.espn.com/apis/v2/sports/hockey/nhl/standings"
+    nextUrl: "https://www.thesportsdb.com/api/v1/json/3/eventsnextleague.php?id=4380"
+  }
+  property LeagueService epl: LeagueService {
+    sportId: "epl"; title: "Premier League"; shortName: "EPL"; durationMin: 120
+    now: root.now; refreshMinutes: root.refreshMinutes
+    highlightTeam: root.pinOf("epl", "team"); highlightPlayer: root.pinOf("epl", "player")
+    scoreboardUrl: "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard"
+    standingsUrl: "https://site.api.espn.com/apis/v2/sports/soccer/eng.1/standings"
+    nextUrl: "https://www.thesportsdb.com/api/v1/json/3/eventsnextleague.php?id=4328"
+  }
+  property LeagueService seriea: LeagueService {
+    sportId: "seriea"; title: "Serie A"; shortName: "SERIE A"; durationMin: 120
+    now: root.now; refreshMinutes: root.refreshMinutes
+    highlightTeam: root.pinOf("seriea", "team"); highlightPlayer: root.pinOf("seriea", "player")
+    scoreboardUrl: "https://site.api.espn.com/apis/site/v2/sports/soccer/ita.1/scoreboard"
+    standingsUrl: "https://site.api.espn.com/apis/v2/sports/soccer/ita.1/standings"
+    nextUrl: "https://www.thesportsdb.com/api/v1/json/3/eventsnextleague.php?id=4332"
+  }
+  property LeagueService ligue1: LeagueService {
+    sportId: "ligue1"; title: "Ligue 1"; shortName: "LIGUE 1"; durationMin: 120
+    now: root.now; refreshMinutes: root.refreshMinutes
+    highlightTeam: root.pinOf("ligue1", "team"); highlightPlayer: root.pinOf("ligue1", "player")
+    scoreboardUrl: "https://site.api.espn.com/apis/site/v2/sports/soccer/fra.1/scoreboard"
+    standingsUrl: "https://site.api.espn.com/apis/v2/sports/soccer/fra.1/standings"
+    nextUrl: "https://www.thesportsdb.com/api/v1/json/3/eventsnextleague.php?id=4334"
+  }
+  property LeagueService laliga: LeagueService {
+    sportId: "laliga"; title: "La Liga"; shortName: "LA LIGA"; durationMin: 120
+    now: root.now; refreshMinutes: root.refreshMinutes
+    highlightTeam: root.pinOf("laliga", "team"); highlightPlayer: root.pinOf("laliga", "player")
+    scoreboardUrl: "https://site.api.espn.com/apis/site/v2/sports/soccer/esp.1/scoreboard"
+    standingsUrl: "https://site.api.espn.com/apis/v2/sports/soccer/esp.1/standings"
+    nextUrl: "https://www.thesportsdb.com/api/v1/json/3/eventsnextleague.php?id=4335"
+  }
+
+  function sportService(id) {
+    if (id === "nfl") return nfl
+    if (id === "nba") return nba
+    if (id === "mlb") return mlb
+    if (id === "nhl") return nhl
+    if (id === "epl") return epl
+    if (id === "seriea") return seriea
+    if (id === "ligue1") return ligue1
+    if (id === "laliga") return laliga
+    if (id === "sumo") return sumo
+    if (id === "gt") return gt
+    return cs
+  }
+
+  function pinOf(id, role) {
+    if (id === "cs") return role === "player" ? csPinPlayer : csPinTeam
+    if (id === "sumo") return role === "player" ? sumoPinPlayer : sumoPinTeam
+    if (id === "gt") return role === "player" ? gtPinPlayer : gtPinTeam
+    var p = pins[id]
+    return p && p[role] ? p[role] : ""
+  }
+
+  function chipLabel(id) {
+    for (var i = 0; i < sportChips.length; i++) {
+      if (sportChips[i].id === id) return sportChips[i].label
+    }
+    return id.toUpperCase()
+  }
+
+  function standingValue(row) {
+    if (!row) return ""
+    if (viewedSport === "cs") return String(row.points) + " pts"
+    if (row.note) return row.note
+    return String(row.points) + " pts"
+  }
+
   readonly property string autoSportId: SportsModel.pickAutoSport([
     { id: "cs", live: root.cs.liveMatches.length > 0, nextAt: SportsModel.nextAt(root.cs.event, root.now) },
-    { id: "sumo", live: root.sumo.torikumi.length > 0, nextAt: SportsModel.nextAt(root.sumo.event, root.now) },
-    { id: "gt", live: false, nextAt: SportsModel.nextAt(root.gt.event, root.now) }
+    { id: "nfl", live: root.nfl.liveMatches.length > 0, nextAt: SportsModel.nextAt(root.nfl.event, root.now) },
+    { id: "nba", live: root.nba.liveMatches.length > 0, nextAt: SportsModel.nextAt(root.nba.event, root.now) },
+    { id: "mlb", live: root.mlb.liveMatches.length > 0, nextAt: SportsModel.nextAt(root.mlb.event, root.now) },
+    { id: "nhl", live: root.nhl.liveMatches.length > 0, nextAt: SportsModel.nextAt(root.nhl.event, root.now) },
+    { id: "epl", live: root.epl.liveMatches.length > 0, nextAt: SportsModel.nextAt(root.epl.event, root.now) },
+    { id: "seriea", live: root.seriea.liveMatches.length > 0, nextAt: SportsModel.nextAt(root.seriea.event, root.now) },
+    { id: "ligue1", live: root.ligue1.liveMatches.length > 0, nextAt: SportsModel.nextAt(root.ligue1.event, root.now) },
+    { id: "laliga", live: root.laliga.liveMatches.length > 0, nextAt: SportsModel.nextAt(root.laliga.event, root.now) },
+    { id: "sumo", live: root.sumo.liveMatches.length > 0, nextAt: SportsModel.nextAt(root.sumo.event, root.now) },
+    { id: "gt", live: root.gt.liveMatches.length > 0, nextAt: SportsModel.nextAt(root.gt.event, root.now) }
   ], root.now)
 
-  readonly property string viewedSport: sportLock === "cs" || sportLock === "sumo" || sportLock === "gt" ? sportLock : autoSportId
-  readonly property var sport: viewedSport === "sumo" ? sumo : viewedSport === "gt" ? gt : cs
-  readonly property string sportLabel: viewedSport === "sumo" ? "SUMO" : viewedSport === "gt" ? "GT" : "CS"
-  readonly property string sportTitle: viewedSport === "sumo" ? "Grand Sumo" : viewedSport === "gt" ? "GT World Challenge" : "Counter-Strike"
+  readonly property string viewedSport: sportIds.indexOf(sportLock) >= 0 ? sportLock : autoSportId
+  readonly property var sport: sportService(viewedSport)
+  readonly property string sportLabel: chipLabel(viewedSport)
+  readonly property string sportTitle: sport && sport.title ? sport.title : chipLabel(viewedSport)
 
   property CsLiveService csLive: CsLiveService {
     now: root.now
@@ -116,14 +241,12 @@ Panel {
   }
 
   readonly property var live: viewedSport === "sumo" ? sumoLive : viewedSport === "gt" ? gtLive : csLive
-  readonly property bool hasLiveContent: viewedSport === "cs" ? root.cs.liveMatches.length > 0
-    : viewedSport === "sumo" ? root.sumo.torikumi.length > 0
-    : root.live.hasData === true
+  readonly property bool hasLiveContent: !!(sport && sport.liveMatches && sport.liveMatches.length > 0)
 
   property Notifier notifier: Notifier {
     now: root.now
     enabled: root.notificationsEnabled
-    events: (cs.event ? [cs.event] : []).concat(sumo.event ? [sumo.event] : []).concat(gt.event ? [gt.event] : [])
+    events: (cs.event ? [cs.event] : []).concat(nfl.event ? [nfl.event] : []).concat(nba.event ? [nba.event] : []).concat(mlb.event ? [mlb.event] : []).concat(nhl.event ? [nhl.event] : []).concat(epl.event ? [epl.event] : []).concat(seriea.event ? [seriea.event] : []).concat(ligue1.event ? [ligue1.event] : []).concat(laliga.event ? [laliga.event] : []).concat(sumo.event ? [sumo.event] : []).concat(gt.event ? [gt.event] : [])
     timeContext: root.timeCtx
     leadMinutes: root.notifyLeadMinutes
     followedSport: root.viewedSport
@@ -133,7 +256,15 @@ Panel {
       { sport: "sumo", value: root.sumoPinPlayer },
       { sport: "sumo", value: root.sumoPinTeam },
       { sport: "gt", value: root.gtPinPlayer },
-      { sport: "gt", value: root.gtPinTeam }
+      { sport: "gt", value: root.gtPinTeam },
+      { sport: "nfl", value: root.pinOf("nfl", "team") },
+      { sport: "nba", value: root.pinOf("nba", "team") },
+      { sport: "mlb", value: root.pinOf("mlb", "team") },
+      { sport: "nhl", value: root.pinOf("nhl", "team") },
+      { sport: "epl", value: root.pinOf("epl", "team") },
+      { sport: "seriea", value: root.pinOf("seriea", "team") },
+      { sport: "ligue1", value: root.pinOf("ligue1", "team") },
+      { sport: "laliga", value: root.pinOf("laliga", "team") }
     ]
   }
 
@@ -165,13 +296,26 @@ Panel {
   }
 
   function pinValue(kind, name) {
+    setPin(viewedSport, kind.indexOf("Team") >= 0 || kind === "team" ? "team" : "player", name)
+  }
+
+  function setPin(id, role, name) {
     var value = String(name || "")
-    if (kind === "csPlayer") csPinPlayer = csPinPlayer === value ? "" : value
-    else if (kind === "csTeam") csPinTeam = csPinTeam === value ? "" : value
-    else if (kind === "sumoPlayer") sumoPinPlayer = sumoPinPlayer === value ? "" : value
-    else if (kind === "sumoTeam") sumoPinTeam = sumoPinTeam === value ? "" : value
-    else if (kind === "gtPlayer") gtPinPlayer = gtPinPlayer === value ? "" : value
-    else if (kind === "gtTeam") gtPinTeam = gtPinTeam === value ? "" : value
+    if (id === "cs" && role === "player") csPinPlayer = csPinPlayer === value ? "" : value
+    else if (id === "cs" && role === "team") csPinTeam = csPinTeam === value ? "" : value
+    else if (id === "sumo" && role === "player") sumoPinPlayer = sumoPinPlayer === value ? "" : value
+    else if (id === "sumo" && role === "team") sumoPinTeam = sumoPinTeam === value ? "" : value
+    else if (id === "gt" && role === "player") gtPinPlayer = gtPinPlayer === value ? "" : value
+    else if (id === "gt" && role === "team") gtPinTeam = gtPinTeam === value ? "" : value
+    else {
+      var next = {}
+      for (var k in pins) next[k] = pins[k]
+      var cur = next[id] || {}
+      var row = { player: cur.player || "", team: cur.team || "" }
+      row[role] = row[role] === value ? "" : value
+      next[id] = row
+      pins = next
+    }
     persistUi()
   }
 
@@ -182,7 +326,8 @@ Panel {
       pins: {
         csPlayer: csPinPlayer, csTeam: csPinTeam,
         sumoPlayer: sumoPinPlayer, sumoTeam: sumoPinTeam,
-        gtPlayer: gtPinPlayer, gtTeam: gtPinTeam
+        gtPlayer: gtPinPlayer, gtTeam: gtPinTeam,
+        leagues: pins
       }
     }) + "\n")
   }
@@ -203,6 +348,7 @@ Panel {
     if (pins.sumoTeam !== undefined) sumoPinTeam = pins.sumoTeam
     if (pins.gtPlayer !== undefined) gtPinPlayer = pins.gtPlayer
     if (pins.gtTeam !== undefined) gtPinTeam = pins.gtTeam
+    if (pins.leagues && typeof pins.leagues === "object") root.pins = pins.leagues
   }
 
   property FileView uiFile: FileView {
@@ -265,6 +411,14 @@ Panel {
   function toggle() { if (root.opened) close(); else openFromHotkey() }
   function refresh() {
     cs.refresh(true)
+    nfl.refresh(true)
+    nba.refresh(true)
+    mlb.refresh(true)
+    nhl.refresh(true)
+    epl.refresh(true)
+    seriea.refresh(true)
+    ligue1.refresh(true)
+    laliga.refresh(true)
     sumo.refresh(true)
     gt.refresh(true)
     if (live.refreshNow) live.refreshNow()
@@ -288,7 +442,7 @@ Panel {
     function toggle(): void { root.toggle() }
     function refresh(): void { root.refresh() }
     function sport(id: string): string {
-      if (id === "auto" || id === "cs" || id === "sumo" || id === "gt") root.selectSport(id)
+      if (id === "auto" || root.sportIds.indexOf(id) >= 0) root.selectSport(id)
       else if (id === "next") root.cycleSport(1)
       else if (id === "prev") root.cycleSport(-1)
       return root.viewedSport
@@ -315,7 +469,7 @@ Panel {
     open: root.opened
     centerOnBar: true
     focusTarget: keyCatcher
-    contentWidth: panel.fittedContentWidth(Style.space(560))
+    contentWidth: panel.fittedContentWidth(Style.space(640))
     contentHeight: panel.fittedContentHeight(column.implicitHeight)
 
     PanelKeyCatcher {
@@ -357,31 +511,28 @@ Panel {
             width: parent.width
             height: Math.max(switcher.implicitHeight, liveToggle.implicitHeight)
 
-            Row {
+            Flow {
               id: switcher
               anchors.left: parent.left
+              anchors.right: liveToggle.visible ? liveToggle.left : parent.right
+              anchors.rightMargin: liveToggle.visible ? Style.space(8) : Style.space(4)
               anchors.leftMargin: Style.space(4)
               anchors.verticalCenter: parent.verticalCenter
               spacing: Style.space(6)
 
               Repeater {
-                model: [
-                  { id: "auto", label: "AUTO" },
-                  { id: "cs", label: "CS2" },
-                  { id: "sumo", label: "SUMO" },
-                  { id: "gt", label: "GT" }
-                ]
+                model: root.sportChips
                 Rectangle {
                   required property var modelData
                   readonly property bool selected: root.sportLock === modelData.id
-                  implicitWidth: chipLabel.implicitWidth + Style.space(16)
-                  implicitHeight: chipLabel.implicitHeight + Style.space(8)
+                  implicitWidth: chipText.implicitWidth + Style.space(16)
+                  implicitHeight: chipText.implicitHeight + Style.space(8)
                   radius: Math.max(2, Style.cornerRadius)
                   color: selected ? Util.alpha(Color.accent, 0.18) : Util.alpha(root.fg, 0.05)
                   border.width: selected ? 1 : 0
                   border.color: Util.alpha(Color.accent, 0.5)
                   Text {
-                    id: chipLabel
+                    id: chipText
                     anchors.centerIn: parent
                     text: modelData.label
                     color: selected ? Color.accent : root.dim
@@ -523,7 +674,7 @@ Panel {
               anchors.right: parent.right
               anchors.rightMargin: Style.space(4)
               anchors.bottom: parent.bottom
-              text: "0 auto · 1 2 3 lock · click to pin · r refresh · esc close"
+              text: "0 auto · chip locks a sport · click to pin · r refresh · esc close"
               color: root.dimmer
               font.family: root.fontFamily
               font.pixelSize: Style.font.caption
@@ -564,7 +715,7 @@ Panel {
           Column {
             spacing: Style.space(2)
             Text {
-              text: root.viewedSport === "sumo" ? "NEXT SESSION" : root.viewedSport === "cs" ? "NEXT MATCH WINDOW" : "GREEN FLAG"
+              text: root.viewedSport === "sumo" ? "NEXT SESSION" : root.viewedSport === "gt" ? "GREEN FLAG" : "NEXT GAME"
               color: root.dimmer
               font.family: root.fontFamily
               font.pixelSize: Style.font.caption
@@ -646,10 +797,10 @@ Panel {
 
       PanelSeparator {
         width: parent.width
-        visible: (root.viewedSport === "sumo" ? root.sumo.schedule : (event && event.sessions ? event.sessions : [])).length > 0
+        visible: (root.viewedSport === "sumo" ? root.sumo.schedule : (root.viewedSport === "gt" && event && event.sessions ? event.sessions : [])).length > 0
       }
       PanelSectionHeader {
-        visible: (root.viewedSport === "sumo" ? root.sumo.schedule : (event && event.sessions ? event.sessions : [])).length > 0
+        visible: (root.viewedSport === "sumo" ? root.sumo.schedule : (root.viewedSport === "gt" && event && event.sessions ? event.sessions : [])).length > 0
         text: root.viewedSport === "sumo"
           ? "DAYS · " + root.sumo.daysLeft + " left"
           : "SCHEDULE · " + (event ? root.fmtRange(event.weekendStartAt, event.weekendEndAt) : "")
@@ -660,9 +811,9 @@ Panel {
       Column {
         width: parent.width
         spacing: Style.space(1)
-        visible: (root.viewedSport === "sumo" ? root.sumo.schedule : (event && event.sessions ? event.sessions : [])).length > 0
+        visible: (root.viewedSport === "sumo" ? root.sumo.schedule : (root.viewedSport === "gt" && event && event.sessions ? event.sessions : [])).length > 0
         Repeater {
-          model: root.viewedSport === "sumo" ? root.sumo.schedule : (event && event.sessions ? event.sessions : [])
+          model: root.viewedSport === "sumo" ? root.sumo.schedule : (root.viewedSport === "gt" && event && event.sessions ? event.sessions : [])
           SessionRow {
             required property var modelData
             width: parent.width
@@ -697,7 +848,9 @@ Panel {
             title: modelData.name
             subtitle: (modelData.series || "") + (modelData.continent ? " · " + modelData.continent : "")
             meta: modelData.locality + " · " + root.fmtDate(modelData.weekendStartAt || modelData.startAt)
-            countdown: root.shortCountdownTo(modelData.weekendStartAt || modelData.startAt)
+            countdown: SportsModel.eventIsDateOnly(modelData)
+              ? root.dayCountdownTo(modelData.weekendStartAt || modelData.startAt)
+              : root.shortCountdownTo(modelData.weekendStartAt || modelData.startAt)
             chipText: modelData.continent || modelData.series || ""
             foreground: root.fg
             fontFamily: root.fontFamily
@@ -708,7 +861,7 @@ Panel {
       PanelSeparator { width: parent.width; visible: root.sport.recent && root.sport.recent.length > 0 }
       PanelSectionHeader {
         visible: root.sport.recent && root.sport.recent.length > 0
-        text: "RECENT TIER 1"
+        text: root.viewedSport === "cs" ? "RECENT TIER 1" : "RECENT"
         foreground: root.fg
         fontFamily: root.fontFamily
         leftPadding: Style.space(4)
@@ -756,7 +909,7 @@ Panel {
             valueText: modelData.record
             clickable: true
             pinned: SportsModel.matchPin(modelData, root.sumoPinPlayer)
-            onClicked: root.pinValue("sumoPlayer", modelData.name)
+            onClicked: root.setPin("sumo", "player", modelData.name)
             foreground: root.fg
             fontFamily: root.fontFamily
           }
@@ -789,8 +942,8 @@ Panel {
               : String(modelData.points) + " pts"
             noteText: root.viewedSport === "cs" && modelData.adr ? Math.round(modelData.adr) + " ADR" : (modelData.rank || "")
             clickable: true
-            pinned: SportsModel.matchPin(modelData, root.viewedSport === "sumo" ? root.sumoPinPlayer : root.viewedSport === "gt" ? root.gtPinPlayer : root.csPinPlayer)
-            onClicked: root.pinValue(root.viewedSport === "sumo" ? "sumoPlayer" : root.viewedSport === "gt" ? "gtPlayer" : "csPlayer", modelData.name)
+            pinned: SportsModel.matchPin(modelData, root.pinOf(root.viewedSport, "player"))
+            onClicked: root.setPin(root.viewedSport, "player", modelData.name)
             foreground: root.fg
             fontFamily: root.fontFamily
           }
@@ -830,11 +983,11 @@ Panel {
             teamName: ""
             showTeam: false
             teamColor: CsColors.colorFor(modelData.name)
-            valueText: root.viewedSport === "cs" ? String(modelData.points) + " pts" : String(modelData.points)
-            noteText: modelData.note || ""
+            valueText: root.standingValue(modelData)
+            noteText: root.viewedSport === "cs" ? (modelData.note || "") : ""
             clickable: true
-            pinned: SportsModel.matchPin(modelData, root.viewedSport === "sumo" ? root.sumoPinTeam : root.viewedSport === "gt" ? root.gtPinTeam : root.csPinTeam)
-            onClicked: root.pinValue(root.viewedSport === "sumo" ? "sumoTeam" : root.viewedSport === "gt" ? "gtTeam" : "csTeam", modelData.name)
+            pinned: SportsModel.matchPin(modelData, root.pinOf(root.viewedSport, "team"))
+            onClicked: root.setPin(root.viewedSport, "team", modelData.name)
             foreground: root.fg
             fontFamily: root.fontFamily
           }
@@ -845,8 +998,8 @@ Panel {
           position: root.sport.teamStandings.pin ? root.sport.teamStandings.pin.position : 0
           name: root.sport.teamStandings.pin ? root.sport.teamStandings.pin.name : ""
           showTeam: false
-          valueText: root.sport.teamStandings.pin ? String(root.sport.teamStandings.pin.points) : ""
-          noteText: root.sport.teamStandings.gap !== null ? root.sport.teamStandings.gap + " pts behind leader" : "PINNED"
+          valueText: root.standingValue(root.sport.teamStandings.pin)
+          noteText: root.sport.teamStandings.gap !== null ? root.sport.teamStandings.gap + " behind leader" : "PINNED"
           pinned: true
           foreground: root.fg
           fontFamily: root.fontFamily
@@ -861,11 +1014,8 @@ Panel {
       spacing: Style.space(10)
       width: parent ? parent.width : 0
 
-      readonly property bool empty: {
-        if (root.viewedSport === "cs") return root.cs.liveMatches.length === 0 && !root.live.hasData
-        if (root.viewedSport === "sumo") return root.sumo.torikumi.length === 0
-        return !root.live.hasData
-      }
+      readonly property bool empty: !(root.sport && root.sport.liveMatches && root.sport.liveMatches.length > 0)
+        && (root.viewedSport !== "gt" || !root.live.hasData)
 
       Column {
         width: parent.width
@@ -947,9 +1097,9 @@ Panel {
         Column {
           width: parent.width
           spacing: Style.space(6)
-          visible: root.viewedSport === "cs"
+          visible: root.viewedSport !== "sumo" && root.viewedSport !== "gt"
           Repeater {
-            model: root.cs.liveMatches.length > 0 ? root.cs.liveMatches : []
+            model: root.sport && root.sport.liveMatches ? root.sport.liveMatches : []
             MatchRow {
               required property var modelData
               width: parent.width
