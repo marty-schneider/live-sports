@@ -72,10 +72,17 @@ QtObject {
     }
   }
 
+  readonly property string credentialsPrelude:
+    'f="${XDG_CONFIG_HOME:-$HOME/.config}/omarchy/sports-tracker/credentials"\n' +
+    'cred_ok() {\n' +
+    '  [ -f "$f" ] && [ ! -L "$f" ] && [ -O "$f" ] || return 1\n' +
+    '  case "$(stat -c %a "$f" 2>/dev/null)" in 600|400) return 0 ;; *) return 1 ;; esac\n' +
+    '}\n'
+
   property Process tokenProc: Process {
     command: ["sh", "-c",
-      'f="$HOME/.config/omarchy/sports-tracker/credentials"\n' +
-      'if [ -f "$f" ] && grep -q "^pandascore_token=" "$f"; then echo yes; else echo no; fi']
+      'set -eu\n' + root.credentialsPrelude +
+      'if cred_ok && grep -q "^pandascore_token=" "$f"; then echo yes; else echo no; fi']
     stdout: StdioCollector {
       waitForEnd: true
       onStreamFinished: root.applyTokenCheck(text)
@@ -84,17 +91,15 @@ QtObject {
 
   property Process pollProc: Process {
     command: ["sh", "-c",
-      'f="$HOME/.config/omarchy/sports-tracker/credentials"\n' +
-      'tok=$(sed -n "s/^pandascore_token=//p" "$f" | head -1)\n' +
-      'hdr=$(mktemp)\n' +
-      'chmod 600 "$hdr"\n' +
-      'printf "Authorization: Bearer %s\\n" "$tok" > "$hdr"\n' +
-      'curl -fsS --max-time 12 --proto "=https" -H @"$hdr" ' +
-      '-H "User-Agent: omarchy-sports-tracker/0.1" ' +
-      '"https://api.pandascore.co/csgo/matches/running?per_page=1"\n' +
-      'rc=$?\n' +
-      'rm -f "$hdr"\n' +
-      'exit $rc']
+      'set -eu\n' + root.credentialsPrelude +
+      'cred_ok || exit 1\n' +
+      'tok=$(sed -n "s/^pandascore_token=//p" "$f" | head -1 | tr -d "\\r")\n' +
+      'case "$tok" in ""|*[!A-Za-z0-9._~+/=-]*) exit 1 ;; esac\n' +
+      'curl -fsS --proto "=https" --proto-redir "=https" --max-redirs 2 \\\n' +
+      '  --max-filesize 1048576 --max-time 12 \\\n' +
+      '  -H "Authorization: Bearer ${tok}" \\\n' +
+      '  -H "User-Agent: Mozilla/5.0 (compatible; omarchy-sports-tracker/0.8)" \\\n' +
+      '  "https://api.pandascore.co/csgo/matches/running?per_page=1"\n']
     stdout: StdioCollector {
       waitForEnd: true
       onStreamFinished: root.applyLive(text)

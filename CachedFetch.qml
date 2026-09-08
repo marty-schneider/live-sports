@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import "SportsWatch.js" as SportsWatch
 
 // One network resource, cached on disk, with offline fallback.
 //
@@ -48,6 +49,7 @@ QtObject {
   // whenever the panel opens onto data that may have aged out.
   function fetch(force) {
     if (root.url === "" || root.name === "") return
+    if (!SportsWatch.isFetchUrl(root.url)) return
     if (fetchProc.running) return
     root.loading = true
     if (root.status === "idle") root.status = "loading"

@@ -13,6 +13,13 @@ source_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 target_dir="${XDG_CONFIG_HOME:-$HOME/.config}/omarchy/plugins/$id"
 cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/omarchy/sports-tracker"
 state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/omarchy/sports-tracker"
+case "$target_dir" in
+*/omarchy/plugins/"$id") ;;
+*)
+  echo "refusing to touch unexpected plugin path: $target_dir" >&2
+  exit 1
+  ;;
+esac
 mode="copy"
 keep_data="no"
 

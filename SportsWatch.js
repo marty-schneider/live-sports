@@ -80,25 +80,70 @@ function parseBroadcasts(comp) {
   return names
 }
 
+function parseHttpsHost(href) {
+  var s = SportsModel.str(href)
+  if (s.indexOf("https://") !== 0) return ""
+  if (/[\u0000-\u001f\u007f\\]/.test(s)) return ""
+  var rest = s.slice(8)
+  var cut = rest.search(/[/?#]/)
+  var authority = (cut === -1 ? rest : rest.slice(0, cut)).toLowerCase()
+  if (authority.indexOf("@") !== -1) return ""
+  if (!/^[a-z0-9.-]+$/.test(authority)) return ""
+  if (authority.indexOf("..") !== -1) return ""
+  return authority
+}
+
+function hostIs(host, base) {
+  return host === base || (host.length > base.length && host.slice(-(base.length + 1)) === "." + base)
+}
+
+function isFetchUrl(href) {
+  var host = parseHttpsHost(href)
+  if (host === "") return false
+  return host === "site.api.espn.com"
+    || host === "www.thesportsdb.com"
+    || host === "api.csapi.de"
+    || host === "sumo-api.com"
+    || host === "www.sumo-api.com"
+    || host === "api.pandascore.co"
+}
+
+function isOpenUrl(href) {
+  var host = parseHttpsHost(href)
+  if (host === "") return false
+  if (hostIs(host, "espn.com")) return true
+  var allowed = [
+    "www.twitch.tv", "www.hltv.org", "www.nfl.com", "www.nba.com", "www.mlb.com",
+    "www.nhl.com", "www.premierleague.com", "www.legaseriea.it", "www.ligue1.com",
+    "www.laliga.com", "www3.nhk.or.jp", "www.sumo.or.jp", "www.youtube.com",
+    "www.gt-world-challenge-europe.com"
+  ]
+  for (var i = 0; i < allowed.length; i++) {
+    if (host === allowed[i]) return true
+  }
+  return false
+}
+
 function parseInfoUrl(row) {
   var links = SportsModel.arrayOf(row && row.links)
+  var fallback = ""
   for (var i = 0; i < links.length; i++) {
     var rel = SportsModel.arrayOf(links[i] && links[i].rel).join(" ").toLowerCase()
     var href = SportsModel.str(links[i] && links[i].href)
-    if (href.indexOf("https://") !== 0) continue
+    if (!isOpenUrl(href)) continue
     if (rel.indexOf("summary") !== -1) return href
+    if (fallback === "") fallback = href
   }
-  for (var j = 0; j < links.length; j++) {
-    var url = SportsModel.str(links[j] && links[j].href)
-    if (url.indexOf("https://") === 0) return url
-  }
-  return ""
+  return fallback
 }
 
 if (typeof module !== "undefined") {
   module.exports = {
     forSport: forSport,
     parseBroadcasts: parseBroadcasts,
-    parseInfoUrl: parseInfoUrl
+    parseInfoUrl: parseInfoUrl,
+    parseHttpsHost: parseHttpsHost,
+    isFetchUrl: isFetchUrl,
+    isOpenUrl: isOpenUrl
   }
 }

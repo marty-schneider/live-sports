@@ -1,6 +1,6 @@
 # Sports Tracker for Omarchy
 
-**v0.8.0** — Where to watch and live updates for each sport. Official league pages, plus TV/stream names from ESPN when the scoreboard lists them.
+**v0.8.1** — Where to watch and live updates for each sport. Official league pages, plus TV/stream names from ESPN when the scoreboard lists them.
 
 One bar pill and dashboard, with a switcher so more sports can be added later:
 
@@ -92,7 +92,7 @@ Selected sport, follow list, and favorite teams are remembered in `~/.local/stat
 
 Nothing is hardcoded as “who is winning”. Rankings and results come from the APIs. The GT calendar is the one place with shipped dates, because SRO does not publish a public JSON feed.
 
-Network access is required. Fetches go through `curl` over HTTPS. There are no extra packages to install. Optional live tokens (PandaScore, SRO timing) are documented above and are not required.
+Network access is required. Fetches go through `curl` over HTTPS to a fixed list of API hosts. Watch links open only `https://` pages on known league/ESPN hosts. Optional live tokens (PandaScore, SRO timing) stay in `~/.config/omarchy/sports-tracker/credentials` (`0600`, not a symlink). They are not required.
 
 ### Paid live (optional)
 

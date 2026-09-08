@@ -31,8 +31,11 @@ QtObject {
 
   property Process checkProc: Process {
     command: ["sh", "-c",
-      'f="$HOME/.config/omarchy/sports-tracker/credentials"\n' +
-      'if [ -f "$f" ] && grep -q "^sro_timing=" "$f"; then echo yes; else echo no; fi']
+      'set -eu\n' +
+      'f="${XDG_CONFIG_HOME:-$HOME/.config}/omarchy/sports-tracker/credentials"\n' +
+      '[ -f "$f" ] && [ ! -L "$f" ] && [ -O "$f" ] || { echo no; exit 0; }\n' +
+      'case "$(stat -c %a "$f" 2>/dev/null)" in 600|400) ;; *) echo no; exit 0 ;; esac\n' +
+      'if grep -q "^sro_timing=" "$f"; then echo yes; else echo no; fi']
     stdout: StdioCollector { waitForEnd: true }
   }
 

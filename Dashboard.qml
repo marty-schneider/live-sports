@@ -220,7 +220,7 @@ Panel {
 
   function openLink(url) {
     var href = String(url || "")
-    if (href.indexOf("https://") !== 0) return
+    if (!SportsWatch.isOpenUrl(href)) return
     if (typeof Qt !== "undefined" && Qt.openUrlExternally) Qt.openUrlExternally(href)
     else Util.execArgv(["xdg-open", href])
   }
