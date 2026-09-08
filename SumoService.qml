@@ -38,7 +38,11 @@ QtObject {
   readonly property var upcoming: SportsModel.upcomingEvents(events, currentIndex, 3)
   readonly property var weekend: SportsModel.weekendState(event, now, "SUMO")
   readonly property var liveSession: event ? SportsModel.liveSession(event, now) : null
-  readonly property var playerStandings: SportsModel.standingsWithPin(rikishi, 5, highlightPlayer)
+  readonly property var playerStandings: {
+    var names = highlightTeams && highlightTeams.length > 0 ? highlightTeams.slice() : []
+    if (highlightPlayer && names.indexOf(highlightPlayer) < 0) names.push(highlightPlayer)
+    return SportsModel.standingsWithFavorites(rikishi, 8, names)
+  }
   readonly property var teamStandings: SportsModel.standingsWithFavorites(heyaRows, 5, highlightTeams && highlightTeams.length > 0 ? highlightTeams : (highlightTeam ? [highlightTeam] : []))
   readonly property var recent: []
   readonly property var liveMatches: torikumi

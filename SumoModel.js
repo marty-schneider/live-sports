@@ -133,6 +133,7 @@ function parseBanzuke(raw) {
       teamName: SportsModel.str(row.rank),
       heya: "",
       rank: SportsModel.str(row.rank),
+      rankValue: SportsModel.int(row.rankValue, i + 1),
       side: SportsModel.str(row.side),
       points: wins,
       wins: wins,
@@ -141,10 +142,19 @@ function parseBanzuke(raw) {
       record: wins + "-" + losses
     })
   }
+  var live = false
+  for (var w = 0; w < out.length; w++) {
+    if ((out[w].wins || 0) > 0) { live = true; break }
+  }
   out.sort(function(a, b) {
-    if (b.wins !== a.wins) return b.wins - a.wins
-    if (a.losses !== b.losses) return a.losses - b.losses
-    return a.position - b.position
+    if (live) {
+      if (b.wins !== a.wins) return b.wins - a.wins
+      if (a.losses !== b.losses) return a.losses - b.losses
+    }
+    if (a.rankValue !== b.rankValue) return a.rankValue - b.rankValue
+    var as = SportsModel.str(a.side).toLowerCase() === "west" ? 1 : 0
+    var bs = SportsModel.str(b.side).toLowerCase() === "west" ? 1 : 0
+    return as - bs
   })
   for (var p = 0; p < out.length; p++) out[p].position = p + 1
   return out

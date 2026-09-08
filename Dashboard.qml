@@ -259,7 +259,7 @@ Panel {
 
   function teamList(id) {
     var svc = sportService(id)
-    if (id === "sumo") return svc.heyaRows || []
+    if (id === "sumo") return svc.rikishi || []
     return svc.teamRows || []
   }
 
@@ -269,18 +269,27 @@ Panel {
     var svc = sportService(sportId)
     var matches = svc.allMatches || svc.matches || []
     var out = []
-    for (var i = 0; i < names.length; i++) {
-      var name = names[i]
-      var standing = null
-      for (var r = 0; r < rows.length; r++) {
-        if (SportsModel.involvesTeam(rows[r], [name])) { standing = rows[r]; break }
-      }
+    var seen = {}
+    function add(standing, fallback) {
+      var name = standing ? standing.name : fallback
+      if (!name || seen[name]) return
+      seen[name] = true
       out.push({
-        name: standing ? standing.name : name,
+        name: name,
         position: standing ? standing.position : 0,
-        valueText: standing ? standingValue(standing) : "",
+        valueText: standing ? (sportId === "sumo" ? standing.record : standingValue(standing)) : "",
         next: SportsModel.nextFavoriteMatch(matches, [name], now)
       })
+    }
+    for (var i = 0; i < names.length; i++) {
+      var matched = false
+      for (var r = 0; r < rows.length; r++) {
+        if (SportsModel.involvesTeam(rows[r], [names[i]])) {
+          add(rows[r], names[i])
+          matched = true
+        }
+      }
+      if (!matched) add(null, names[i])
     }
     return out
   }
@@ -948,7 +957,7 @@ Panel {
       PanelSeparator { width: parent.width }
 
       PanelSectionHeader {
-        text: "TEAMS · " + root.favoritesOf(root.settingsTeamSport).length + " fav"
+        text: (root.settingsTeamSport === "sumo" ? "RIKISHI · " : "TEAMS · ") + root.favoritesOf(root.settingsTeamSport).length + " fav"
         foreground: root.fg
         fontFamily: root.fontFamily
         leftPadding: Style.space(4)
@@ -959,7 +968,9 @@ Panel {
         leftPadding: Style.space(4)
         rightPadding: Style.space(4)
         wrapMode: Text.WordWrap
-        text: "Favorite teams to track. AUTO, the pill, and notifications follow their games. Click a standings row to star one too."
+        text: root.settingsTeamSport === "sumo"
+          ? "Favorite rikishi to track. The Makuuchi list and YOUR TEAMS follow them."
+          : "Favorite teams to track. AUTO, the pill, and notifications follow their games. Click a standings row to star one too."
         color: root.dim
         font.family: root.fontFamily
         font.pixelSize: Style.font.caption
@@ -1009,7 +1020,7 @@ Panel {
             required property var modelData
             width: parent.width
             label: modelData.name
-            description: modelData.note || (modelData.position ? "P" + modelData.position : "")
+            description: modelData.rank || modelData.note || (modelData.position ? "P" + modelData.position : "")
             checked: root.isTeamFavorite(root.settingsTeamSport, modelData.name)
             foreground: root.fg
             fontFamily: root.fontFamily
@@ -1306,7 +1317,7 @@ Panel {
       PanelSeparator { width: parent.width; visible: root.sport.playerStandings.top.length > 0 }
       PanelSectionHeader {
         visible: root.sport.playerStandings.top.length > 0
-        text: root.viewedSport === "cs" ? "PLAYERS" : root.viewedSport === "sumo" ? "MAKUUCHI" : "DRIVERS"
+        text: root.viewedSport === "cs" ? "PLAYERS" : root.viewedSport === "sumo" ? "MAKUUCHI · " + (root.sport.playerStandings.top ? root.sport.playerStandings.top.length : 0) : "DRIVERS"
         foreground: root.fg
         fontFamily: root.fontFamily
         leftPadding: Style.space(4)
@@ -1329,14 +1340,39 @@ Panel {
               : String(modelData.points) + " pts"
             noteText: root.viewedSport === "cs" && modelData.adr ? Math.round(modelData.adr) + " ADR" : (modelData.rank || "")
             clickable: true
-            pinned: SportsModel.matchPin(modelData, root.pinOf(root.viewedSport, "player"))
-            onClicked: root.setPin(root.viewedSport, "player", modelData.name)
+            pinned: root.viewedSport === "sumo"
+              ? root.isTeamFavorite("sumo", modelData.name) || SportsModel.matchPin(modelData, root.sumoPinPlayer)
+              : SportsModel.matchPin(modelData, root.pinOf(root.viewedSport, "player"))
+            onClicked: {
+              if (root.viewedSport === "sumo") root.toggleFavorite("sumo", modelData.name)
+              else root.setPin(root.viewedSport, "player", modelData.name)
+            }
+            foreground: root.fg
+            fontFamily: root.fontFamily
+          }
+        }
+        Repeater {
+          model: root.sport.playerStandings.extras || []
+          StandingRow {
+            required property var modelData
+            width: parent.width
+            position: modelData.position
+            name: modelData.name
+            teamName: modelData.teamName || modelData.rank || ""
+            valueText: root.viewedSport === "sumo" ? modelData.record : String(modelData.points)
+            noteText: "FAV"
+            clickable: true
+            pinned: true
+            onClicked: {
+              if (root.viewedSport === "sumo") root.toggleFavorite("sumo", modelData.name)
+              else root.setPin(root.viewedSport, "player", modelData.name)
+            }
             foreground: root.fg
             fontFamily: root.fontFamily
           }
         }
         StandingRow {
-          visible: root.sport.playerStandings.pin !== null
+          visible: root.sport.playerStandings.pin !== null && !(root.sport.playerStandings.extras && root.sport.playerStandings.extras.length > 0)
           width: parent.width
           position: root.sport.playerStandings.pin ? root.sport.playerStandings.pin.position : 0
           name: root.sport.playerStandings.pin ? root.sport.playerStandings.pin.name : ""

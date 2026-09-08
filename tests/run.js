@@ -177,6 +177,8 @@ if (fs.existsSync(path.join(FIXTURES, "sumo-basho.json"))) {
 if (fs.existsSync(path.join(FIXTURES, "sumo-banzuke.json"))) {
   const banzuke = SumoModel.parseBanzuke(fixture("sumo-banzuke.json"))
   assert("Sumo banzuke has yokozuna", banzuke.some((r) => /Yokozuna/i.test(r.rank)))
+  assert("Sumo banzuke keeps Aonishiki in sanyaku order", banzuke.findIndex((r) => r.name === "Aonishiki") >= 0 && banzuke.findIndex((r) => r.name === "Aonishiki") <= 6)
+  assert("Sumo pre-basho lists yokozuna first", banzuke[0] && /Yokozuna/i.test(banzuke[0].rank))
 }
 
 if (fs.existsSync(path.join(FIXTURES, "sumo-torikumi.json"))) {
