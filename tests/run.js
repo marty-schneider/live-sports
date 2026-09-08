@@ -84,7 +84,20 @@ assert("CS seed is sorted", csCal.every((e, i) => i === 0 || e.startAt >= csCal[
 const gtCal = GtModel.seedCalendar()
 assert("GT calendar covers four continents", new Set(gtCal.map((e) => e.continent)).size === 4)
 assert("GT has Zandvoort sessions", gtCal.some((e) => e.id === "eur-zandvoort" && e.sessions.length >= 6))
-assert("GT Spa is endurance-shaped", gtCal.some((e) => e.id === "eur-spa-24h" && e.sessions.some((s) => s.group === "Race")))
+assert("GT Spa has no invented sessions", gtCal.some((e) => e.id === "eur-spa-24h" && e.dateOnly === true && e.sessions.length === 0))
+assert("CS seed has no invented sessions", csCal.every((e) => e.sessions.length === 0 && e.dateOnly === true))
+assert("auto-sport prefers live", SportsModel.pickAutoSport([
+  { id: "cs", live: false, nextAt: 100 },
+  { id: "sumo", live: true, nextAt: 500 },
+  { id: "gt", live: false, nextAt: 50 }
+], 0) === "sumo")
+assert("auto-sport picks soonest", SportsModel.pickAutoSport([
+  { id: "cs", live: false, nextAt: 200 },
+  { id: "sumo", live: false, nextAt: 80 },
+  { id: "gt", live: false, nextAt: 500 }
+], 0) === "sumo")
+assert("day countdown today", SportsTime.dayCountdown(0, 0, SportsTime.defaultContext()) === "today")
+assert("day countdown future", SportsTime.dayCountdown(3 * SportsTime.DAY, 0, SportsTime.defaultContext()) === "3d")
 
 const pin = SportsModel.standingsWithPin(
   [
@@ -107,6 +120,7 @@ if (fs.existsSync(path.join(FIXTURES, "cs-rankings.json"))) {
   assert("CS rankings parse", ranks.length >= 5 && ranks[0].name)
   const matches = CsModel.parseMatches(fixture("cs-matches.json"))
   assert("CS matches filter to tier 1", matches.every((m) => CsModel.isTier1(m.event)))
+  assert("CS matches do not invent kickoff times", matches.every((m) => m.dateOnly === true))
   const players = CsModel.parsePlayerStats(fixture("cs-players.json"))
   assert("CS players parse", players.length >= 5)
 }
@@ -114,7 +128,12 @@ if (fs.existsSync(path.join(FIXTURES, "cs-rankings.json"))) {
 if (fs.existsSync(path.join(FIXTURES, "sumo-basho.json"))) {
   const basho = SumoModel.parseBasho(fixture("sumo-basho.json"), "202609")
   assert("Sumo basho has 15 days", basho && basho.sessions.length === 15)
+  assert("Sumo days are date-only", basho.sessions.every((s) => s.dateOnly === true))
   assert("Sumo Aki is Tokyo", basho.locality === "Tokyo")
+  assert("Sumo short is AKI", basho.short === "AKI")
+  assert("yusho race includes anyone who can catch the leader", SumoModel.yushoRace([
+    { name: "A", wins: 10 }, { name: "B", wins: 8 }, { name: "C", wins: 2 }
+  ], 2).map((r) => r.name).join(",") === "A,B")
 }
 
 if (fs.existsSync(path.join(FIXTURES, "sumo-banzuke.json"))) {

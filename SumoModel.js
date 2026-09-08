@@ -5,12 +5,12 @@
 
 // Grand Sumo honbasho, Makuuchi only. Six odd-month basho.
 var BASHO = [
-  { month: 1, name: "Hatsu Basho", locality: "Tokyo", venue: "Ryogoku Kokugikan" },
-  { month: 3, name: "Haru Basho", locality: "Osaka", venue: "Edion Arena Osaka" },
-  { month: 5, name: "Natsu Basho", locality: "Tokyo", venue: "Ryogoku Kokugikan" },
-  { month: 7, name: "Nagoya Basho", locality: "Nagoya", venue: "Dolphins Arena" },
-  { month: 9, name: "Aki Basho", locality: "Tokyo", venue: "Ryogoku Kokugikan" },
-  { month: 11, name: "Kyushu Basho", locality: "Fukuoka", venue: "Fukuoka Kokusai Center" }
+  { month: 1, name: "Hatsu Basho", short: "HATSU", locality: "Tokyo", venue: "Ryogoku Kokugikan" },
+  { month: 3, name: "Haru Basho", short: "HARU", locality: "Osaka", venue: "Edion Arena Osaka" },
+  { month: 5, name: "Natsu Basho", short: "NATSU", locality: "Tokyo", venue: "Ryogoku Kokugikan" },
+  { month: 7, name: "Nagoya Basho", short: "NAGOYA", locality: "Nagoya", venue: "Dolphins Arena" },
+  { month: 9, name: "Aki Basho", short: "AKI", locality: "Tokyo", venue: "Ryogoku Kokugikan" },
+  { month: 11, name: "Kyushu Basho", short: "KYUSHU", locality: "Fukuoka", venue: "Fukuoka Kokusai Center" }
 ]
 
 function bashoId(year, month) {
@@ -23,9 +23,9 @@ function bashoMeta(id) {
   var month = SportsModel.int(s.slice(4, 6), 0)
   for (var i = 0; i < BASHO.length; i++) {
     if (BASHO[i].month === month)
-      return { year: year, month: month, name: BASHO[i].name, locality: BASHO[i].locality, venue: BASHO[i].venue, country: "Japan" }
+      return { year: year, month: month, name: BASHO[i].name, short: BASHO[i].short, locality: BASHO[i].locality, venue: BASHO[i].venue, country: "Japan" }
   }
-  return { year: year, month: month, name: "Honbasho", locality: "Japan", venue: "", country: "Japan" }
+  return { year: year, month: month, name: "Honbasho", short: "SUMO", locality: "Japan", venue: "", country: "Japan" }
 }
 
 function nearbyBashoIds(nowMs) {
@@ -38,13 +38,6 @@ function nearbyBashoIds(nowMs) {
   return ids
 }
 
-// Makuuchi is the last block of the day, typically 16:00–18:15 JST (UTC+9, no DST).
-function makuuchiWindow(dayStartUtc) {
-  var startAt = dayStartUtc + (16 - 9) * SportsTime.HOUR
-  var endAt = dayStartUtc + (18 - 9) * SportsTime.HOUR + 15 * SportsTime.MINUTE
-  return { startAt: startAt, endAt: endAt }
-}
-
 function parseBasho(raw, id) {
   var data = SportsModel.safeParse(raw)
   if (!data) return null
@@ -53,38 +46,72 @@ function parseBasho(raw, id) {
   if (!SportsTime.isInstant(startAt) || !SportsTime.isInstant(endAt)) return null
   if (new Date(startAt).getUTCFullYear() < 2000) return null
   var meta = bashoMeta(data.date || id)
-  // API endDate is the first moment of the last day; extend through makuuchi.
-  var lastDay = makuuchiWindow(endAt)
   var sessions = []
   for (var day = 1; day <= 15; day++) {
     var dayUtc = startAt + (day - 1) * SportsTime.DAY
-    var win = makuuchiWindow(dayUtc)
     sessions.push(SportsModel.makeSession({
       key: "day" + day,
       short: "D" + day,
       name: day === 15 ? "Senshuraku" : "Day " + day,
       group: "Makuuchi",
-      durationMin: 135
-    }, win.startAt, win.endAt, false))
+      durationMin: 1440
+    }, dayUtc, dayUtc + SportsTime.DAY, true))
   }
   return {
     id: SportsModel.str(data.date || id),
     sport: "sumo",
     name: meta.name,
     series: "Grand Sumo",
+    short: meta.short,
     venue: meta.venue,
     locality: meta.locality,
     country: meta.country,
     continent: "Asia",
     startAt: startAt,
-    endAt: lastDay.endAt,
-    weekendStartAt: sessions[0].startAt,
-    weekendEndAt: lastDay.endAt,
+    endAt: startAt + 15 * SportsTime.DAY,
+    weekendStartAt: startAt,
+    weekendEndAt: startAt + 15 * SportsTime.DAY,
     sessions: sessions,
+    dateOnly: true,
     round: meta.month,
     season: String(meta.year),
     yusho: SportsModel.arrayOf(data.yusho)
   }
+}
+
+function remainingDays(event, nowMs) {
+  if (!event || !event.sessions) return 0
+  var left = 0
+  for (var i = 0; i < event.sessions.length; i++) {
+    if (SportsModel.sessionState(event.sessions[i], nowMs) !== "done") left += 1
+  }
+  return left
+}
+
+function yushoRace(rikishi, daysLeft) {
+  var list = SportsModel.arrayOf(rikishi)
+  if (list.length === 0) return []
+  var lead = 0
+  for (var i = 0; i < list.length; i++) {
+    if ((list[i].wins || 0) > lead) lead = list[i].wins
+  }
+  var out = []
+  for (var j = 0; j < list.length; j++) {
+    var row = list[j]
+    if ((row.wins || 0) + daysLeft >= lead) out.push(row)
+  }
+  return out
+}
+
+function visibleDays(event, nowMs, limit) {
+  var sessions = event && event.sessions ? event.sessions : []
+  var out = []
+  for (var i = 0; i < sessions.length; i++) {
+    if (SportsModel.sessionState(sessions[i], nowMs) === "done") continue
+    out.push(sessions[i])
+    if (out.length >= (limit || 3)) break
+  }
+  return out
 }
 
 function parseBanzuke(raw) {
@@ -207,8 +234,10 @@ if (typeof module !== "undefined") {
     bashoId: bashoId,
     bashoMeta: bashoMeta,
     nearbyBashoIds: nearbyBashoIds,
-    makuuchiWindow: makuuchiWindow,
     parseBasho: parseBasho,
+    remainingDays: remainingDays,
+    yushoRace: yushoRace,
+    visibleDays: visibleDays,
     parseBanzuke: parseBanzuke,
     parseTorikumi: parseTorikumi,
     parseRikishiList: parseRikishiList,

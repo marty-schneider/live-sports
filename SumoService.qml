@@ -39,6 +39,9 @@ QtObject {
   readonly property var playerStandings: SportsModel.standingsWithPin(rikishi, 5, highlightPlayer)
   readonly property var teamStandings: SportsModel.standingsWithPin(heyaRows, 5, highlightTeam)
   readonly property var recent: []
+  readonly property int daysLeft: SumoModel.remainingDays(event, now)
+  readonly property var yusho: SumoModel.yushoRace(rikishi, daysLeft)
+  readonly property var schedule: SumoModel.visibleDays(event, now, 3)
   readonly property bool offSeason: events.length > 0 && currentIndex < 0
   readonly property bool loaded: events.length > 0
   readonly property bool stale: basho.isStale || banzuke.isStale

@@ -22,14 +22,12 @@ QtObject {
   readonly property var weekend: SportsModel.weekendState(event, now, "CS")
   readonly property var liveMatches: CsModel.liveMatches(matches, now)
   readonly property var liveSession: {
-    if (liveMatches.length > 0) {
-      var first = liveMatches[0]
-      return {
-        key: "live", short: "LIVE", name: first.event || "Live match", group: "Match",
-        startAt: now, endAt: now + 3 * SportsTime.HOUR, dateOnly: false
-      }
+    if (liveMatches.length === 0) return null
+    var first = liveMatches[0]
+    return {
+      key: "live", short: "LIVE", name: first.event || "Live match", group: "Match",
+      startAt: now, endAt: now + 3 * SportsTime.HOUR, dateOnly: false
     }
-    return event ? SportsModel.liveSession(event, now) : null
   }
   readonly property var teamStandings: SportsModel.standingsWithPin(teamRows, 5, highlightTeam)
   readonly property var playerStandings: SportsModel.standingsWithPin(playerRows, 5, highlightPlayer)

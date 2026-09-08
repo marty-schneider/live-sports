@@ -31,15 +31,15 @@ Panel {
   readonly property int refreshMinutes: Math.max(5, parseInt(setting("refreshMinutes", 15), 10) || 15)
   readonly property bool notificationsEnabled: setting("notifications", true) === true
   readonly property string notifyLeadMinutes: String(setting("notifyLeadMinutes", "30,15"))
-  readonly property string defaultSport: String(setting("defaultSport", "cs"))
-  readonly property string csHighlightPlayer: String(setting("csHighlightPlayer", "donk"))
-  readonly property string csHighlightTeam: String(setting("csHighlightTeam", "Spirit"))
-  readonly property string sumoHighlightPlayer: String(setting("sumoHighlightPlayer", "Onosato"))
-  readonly property string sumoHighlightTeam: String(setting("sumoHighlightTeam", "Yokozuna"))
-  readonly property string gtHighlightPlayer: String(setting("gtHighlightPlayer", ""))
-  readonly property string gtHighlightTeam: String(setting("gtHighlightTeam", "Mercedes"))
+  readonly property string defaultSport: String(setting("defaultSport", "auto"))
+  property string csPinPlayer: String(setting("csHighlightPlayer", "donk"))
+  property string csPinTeam: String(setting("csHighlightTeam", "Spirit"))
+  property string sumoPinPlayer: String(setting("sumoHighlightPlayer", "Onosato"))
+  property string sumoPinTeam: String(setting("sumoHighlightTeam", "Nishonoseki"))
+  property string gtPinPlayer: String(setting("gtHighlightPlayer", ""))
+  property string gtPinTeam: String(setting("gtHighlightTeam", "Mercedes"))
 
-  property string sportId: "cs"
+  property string sportLock: "auto"
   property string gtContinent: "all"
   readonly property var sports: ["cs", "sumo", "gt"]
 
@@ -54,8 +54,10 @@ Panel {
   function fmtRange(from, to) { return SportsTime.formatDateRange(from, to, timeCtx) }
   function countdownTo(at) { return SportsTime.countdown(at, now) }
   function shortCountdownTo(at) { return SportsTime.shortCountdown(at, now) }
+  function dayCountdownTo(at) { return SportsTime.dayCountdown(at, now, timeCtx) }
   function agoOf(at) { return SportsTime.agoText(at, now) }
   function stateOf(session) { return SportsModel.sessionState(session, now) }
+  function hasClock(session) { return SportsModel.hasClock(session) }
 
   property TimeService timeSvc: TimeService {
     hour12: root.hour12
@@ -65,48 +67,58 @@ Panel {
   property CsService cs: CsService {
     now: root.now
     refreshMinutes: root.refreshMinutes
-    highlightPlayer: root.csHighlightPlayer
-    highlightTeam: root.csHighlightTeam
+    highlightPlayer: root.csPinPlayer
+    highlightTeam: root.csPinTeam
   }
   property SumoService sumo: SumoService {
     now: root.now
     refreshMinutes: root.refreshMinutes
-    highlightPlayer: root.sumoHighlightPlayer
-    highlightTeam: root.sumoHighlightTeam
+    highlightPlayer: root.sumoPinPlayer
+    highlightTeam: root.sumoPinTeam
   }
   property GtService gt: GtService {
     now: root.now
     refreshMinutes: root.refreshMinutes
-    highlightPlayer: root.gtHighlightPlayer
-    highlightTeam: root.gtHighlightTeam
+    highlightPlayer: root.gtPinPlayer
+    highlightTeam: root.gtPinTeam
     continentFilter: root.gtContinent
   }
 
-  readonly property var sport: sportId === "sumo" ? sumo : sportId === "gt" ? gt : cs
-  readonly property string sportLabel: sportId === "sumo" ? "SUMO" : sportId === "gt" ? "GT" : "CS"
-  readonly property string sportTitle: sportId === "sumo" ? "Grand Sumo" : sportId === "gt" ? "GT World Challenge" : "Counter-Strike"
+  readonly property string autoSportId: SportsModel.pickAutoSport([
+    { id: "cs", live: root.cs.liveMatches.length > 0, nextAt: SportsModel.nextAt(root.cs.event, root.now) },
+    { id: "sumo", live: root.sumo.torikumi.length > 0, nextAt: SportsModel.nextAt(root.sumo.event, root.now) },
+    { id: "gt", live: false, nextAt: SportsModel.nextAt(root.gt.event, root.now) }
+  ], root.now)
+
+  readonly property string viewedSport: sportLock === "cs" || sportLock === "sumo" || sportLock === "gt" ? sportLock : autoSportId
+  readonly property var sport: viewedSport === "sumo" ? sumo : viewedSport === "gt" ? gt : cs
+  readonly property string sportLabel: viewedSport === "sumo" ? "SUMO" : viewedSport === "gt" ? "GT" : "CS"
+  readonly property string sportTitle: viewedSport === "sumo" ? "Grand Sumo" : viewedSport === "gt" ? "GT World Challenge" : "Counter-Strike"
 
   property CsLiveService csLive: CsLiveService {
     now: root.now
-    enabled: root.liveMode && root.sportId === "cs"
+    enabled: root.liveMode && root.viewedSport === "cs"
     refreshSeconds: root.liveRefreshSec
-    scheduledSession: root.sportId === "cs" ? root.sport.liveSession : null
+    scheduledSession: root.viewedSport === "cs" ? root.sport.liveSession : null
     matches: root.cs.matches
   }
   property SumoLiveService sumoLive: SumoLiveService {
     now: root.now
-    enabled: root.liveMode && root.sportId === "sumo"
-    scheduledSession: root.sportId === "sumo" ? root.sport.liveSession : null
+    enabled: root.liveMode && root.viewedSport === "sumo"
+    scheduledSession: root.viewedSport === "sumo" ? root.sport.liveSession : null
     bouts: root.sumo.torikumi
   }
   property GtLiveService gtLive: GtLiveService {
     now: root.now
-    enabled: root.liveMode && root.sportId === "gt"
+    enabled: root.liveMode && root.viewedSport === "gt"
     refreshSeconds: root.liveRefreshSec
-    scheduledSession: root.sportId === "gt" ? root.sport.liveSession : null
+    scheduledSession: root.viewedSport === "gt" ? root.sport.liveSession : null
   }
 
-  readonly property var live: sportId === "sumo" ? sumoLive : sportId === "gt" ? gtLive : csLive
+  readonly property var live: viewedSport === "sumo" ? sumoLive : viewedSport === "gt" ? gtLive : csLive
+  readonly property bool hasLiveContent: viewedSport === "cs" ? root.cs.liveMatches.length > 0
+    : viewedSport === "sumo" ? root.sumo.torikumi.length > 0
+    : root.live.hasData === true
 
   property Notifier notifier: Notifier {
     now: root.now
@@ -114,37 +126,83 @@ Panel {
     events: (cs.event ? [cs.event] : []).concat(sumo.event ? [sumo.event] : []).concat(gt.event ? [gt.event] : [])
     timeContext: root.timeCtx
     leadMinutes: root.notifyLeadMinutes
+    followedSport: root.viewedSport
+    pinQueries: [
+      { sport: "cs", value: root.csPinTeam },
+      { sport: "cs", value: root.csPinPlayer },
+      { sport: "sumo", value: root.sumoPinPlayer },
+      { sport: "sumo", value: root.sumoPinTeam },
+      { sport: "gt", value: root.gtPinPlayer },
+      { sport: "gt", value: root.gtPinTeam }
+    ]
   }
 
   property string liveOverride: ""
-  readonly property bool autoLiveActive: autoLive && sport.liveSession !== null
-  readonly property bool liveMode: liveOverride === "on" ? true : liveOverride === "off" ? false : autoLiveActive
+  readonly property bool autoLiveActive: autoLive && hasLiveContent
+  readonly property bool liveMode: !hasLiveContent ? false
+    : liveOverride === "on" ? true
+    : liveOverride === "off" ? false
+    : autoLiveActive
 
-  function toggleLive() { liveOverride = liveMode ? "off" : "on" }
+  function toggleLive() {
+    if (!hasLiveContent) return
+    liveOverride = liveMode ? "off" : "on"
+  }
   onAutoLiveActiveChanged: liveOverride = ""
-  onSportIdChanged: liveOverride = ""
+  onViewedSportChanged: liveOverride = ""
 
   function selectSport(id) {
-    if (sports.indexOf(id) < 0) return
-    sportId = id
+    if (id === "auto") sportLock = "auto"
+    else if (sports.indexOf(id) >= 0) sportLock = id
     persistUi()
   }
 
   function cycleSport(delta) {
-    var i = sports.indexOf(sportId)
+    var order = ["auto"].concat(sports)
+    var i = order.indexOf(sportLock)
     if (i < 0) i = 0
-    selectSport(sports[(i + delta + sports.length) % sports.length])
+    selectSport(order[(i + delta + order.length) % order.length])
+  }
+
+  function pinValue(kind, name) {
+    var value = String(name || "")
+    if (kind === "csPlayer") csPinPlayer = csPinPlayer === value ? "" : value
+    else if (kind === "csTeam") csPinTeam = csPinTeam === value ? "" : value
+    else if (kind === "sumoPlayer") sumoPinPlayer = sumoPinPlayer === value ? "" : value
+    else if (kind === "sumoTeam") sumoPinTeam = sumoPinTeam === value ? "" : value
+    else if (kind === "gtPlayer") gtPinPlayer = gtPinPlayer === value ? "" : value
+    else if (kind === "gtTeam") gtPinTeam = gtPinTeam === value ? "" : value
+    persistUi()
   }
 
   function persistUi() {
-    uiFile.setText(JSON.stringify({ sportId: sportId, gtContinent: gtContinent }) + "\n")
+    uiFile.setText(JSON.stringify({
+      sportLock: sportLock,
+      gtContinent: gtContinent,
+      pins: {
+        csPlayer: csPinPlayer, csTeam: csPinTeam,
+        sumoPlayer: sumoPinPlayer, sumoTeam: sumoPinTeam,
+        gtPlayer: gtPinPlayer, gtTeam: gtPinTeam
+      }
+    }) + "\n")
   }
 
   function loadUi(raw) {
     var parsed = SportsModel.safeParse(raw)
-    if (parsed && sports.indexOf(parsed.sportId) >= 0) sportId = parsed.sportId
-    else if (sports.indexOf(defaultSport) >= 0) sportId = defaultSport
-    if (parsed && parsed.gtContinent) gtContinent = parsed.gtContinent
+    if (!parsed) {
+      if (defaultSport === "auto" || sports.indexOf(defaultSport) >= 0) sportLock = defaultSport
+      return
+    }
+    if (parsed.sportLock === "auto" || sports.indexOf(parsed.sportLock) >= 0) sportLock = parsed.sportLock
+    else if (parsed.sportId === "auto" || sports.indexOf(parsed.sportId) >= 0) sportLock = parsed.sportId
+    if (parsed.gtContinent) gtContinent = parsed.gtContinent
+    var pins = parsed.pins || {}
+    if (pins.csPlayer !== undefined) csPinPlayer = pins.csPlayer
+    if (pins.csTeam !== undefined) csPinTeam = pins.csTeam
+    if (pins.sumoPlayer !== undefined) sumoPinPlayer = pins.sumoPlayer
+    if (pins.sumoTeam !== undefined) sumoPinTeam = pins.sumoTeam
+    if (pins.gtPlayer !== undefined) gtPinPlayer = pins.gtPlayer
+    if (pins.gtTeam !== undefined) gtPinTeam = pins.gtTeam
   }
 
   property FileView uiFile: FileView {
@@ -156,25 +214,31 @@ Panel {
   }
 
   readonly property string label: {
-    if (!sport.loaded) return sport.failed ? sportLabel + " —" : sportLabel + " ⋯"
-    if (sport.offSeason) return sportLabel + " OFF"
-    if (sport.liveSession) return sportLabel + " LIVE"
-    var next = sport.event ? SportsModel.nextSession(sport.event, now) : null
-    if (!next) return sportLabel + " —"
-    return sportLabel + " " + shortCountdownTo(next.startAt)
+    var ev = sport.event
+    var short = (ev && ev.short) ? ev.short : sportLabel
+    if (!sport.loaded) return short + (sport.failed ? " —" : " ⋯")
+    if (sport.offSeason) return short + " OFF"
+    if (hasLiveContent) return short + " LIVE"
+    var at = SportsModel.nextAt(ev, now)
+    if (!SportsTime.isInstant(at)) return short + " —"
+    if (SportsModel.eventIsDateOnly(ev)) return short + " " + dayCountdownTo(at)
+    return short + " " + shortCountdownTo(at)
   }
 
   readonly property string tooltipText: {
     if (!sport.loaded) return sportTitle + " — loading"
     if (sport.offSeason) return sportTitle + " — off season"
-    if (sport.liveSession && sport.event)
-      return sport.liveSession.name + " is live — " + sport.event.name
-    var next = sport.event ? SportsModel.nextSession(sport.event, now) : null
-    if (!next || !sport.event) return sportTitle
-    return sport.event.name + " · " + next.name + " " + fmtDayTime(next.startAt)
+    if (hasLiveContent && sport.event)
+      return sport.event.name + " is on"
+    var ev = sport.event
+    if (!ev) return sportTitle
+    var next = SportsModel.nextSession(ev, now)
+    var at = SportsModel.nextAt(ev, now)
+    var when = next && hasClock(next) ? fmtDayTime(next.startAt) : fmtDate(at)
+    return ev.name + (when ? " · " + when : "")
   }
 
-  readonly property bool sessionLive: sport.liveSession !== null
+  readonly property bool sessionLive: hasLiveContent
 
   property bool openedFromHotkey: false
 
@@ -224,10 +288,10 @@ Panel {
     function toggle(): void { root.toggle() }
     function refresh(): void { root.refresh() }
     function sport(id: string): string {
-      if (id === "cs" || id === "sumo" || id === "gt") root.selectSport(id)
+      if (id === "auto" || id === "cs" || id === "sumo" || id === "gt") root.selectSport(id)
       else if (id === "next") root.cycleSport(1)
       else if (id === "prev") root.cycleSport(-1)
-      return root.sportId
+      return root.viewedSport
     }
     function live(mode: string): string {
       if (mode === "on" || mode === "off") root.liveOverride = mode
@@ -259,7 +323,7 @@ Panel {
       anchors.fill: parent
       onCloseRequested: root.close()
       onTabRequested: function(direction) { root.switchPanel(direction) }
-      onActivateRequested: root.toggleLive()
+      onActivateRequested: { if (root.hasLiveContent) root.toggleLive() }
       onMoveRequested: function(dx, dy) {
         if (dx !== 0) root.cycleSport(dx)
         if (dy === 0) return
@@ -267,6 +331,7 @@ Panel {
       }
       onTextKey: function(text) {
         if (text === "r") root.refresh()
+        else if (text === "0") root.selectSport("auto")
         else if (text === "1") root.selectSport("cs")
         else if (text === "2") root.selectSport("sumo")
         else if (text === "3") root.selectSport("gt")
@@ -301,26 +366,28 @@ Panel {
 
               Repeater {
                 model: [
+                  { id: "auto", label: "AUTO" },
                   { id: "cs", label: "CS2" },
                   { id: "sumo", label: "SUMO" },
                   { id: "gt", label: "GT" }
                 ]
                 Rectangle {
                   required property var modelData
+                  readonly property bool selected: root.sportLock === modelData.id
                   implicitWidth: chipLabel.implicitWidth + Style.space(16)
                   implicitHeight: chipLabel.implicitHeight + Style.space(8)
                   radius: Math.max(2, Style.cornerRadius)
-                  color: root.sportId === modelData.id ? Util.alpha(Color.accent, 0.18) : Util.alpha(root.fg, 0.05)
-                  border.width: root.sportId === modelData.id ? 1 : 0
+                  color: selected ? Util.alpha(Color.accent, 0.18) : Util.alpha(root.fg, 0.05)
+                  border.width: selected ? 1 : 0
                   border.color: Util.alpha(Color.accent, 0.5)
                   Text {
                     id: chipLabel
                     anchors.centerIn: parent
                     text: modelData.label
-                    color: root.sportId === modelData.id ? Color.accent : root.dim
+                    color: selected ? Color.accent : root.dim
                     font.family: root.fontFamily
                     font.pixelSize: Style.font.caption
-                    font.bold: root.sportId === modelData.id
+                    font.bold: selected
                     font.letterSpacing: 0.8
                   }
                   MouseArea {
@@ -331,13 +398,14 @@ Panel {
                   Accessible.role: Accessible.Button
                   Accessible.name: modelData.label
                   Accessible.checkable: true
-                  Accessible.checked: root.sportId === modelData.id
+                  Accessible.checked: selected
                 }
               }
             }
 
             Rectangle {
               id: liveToggle
+              visible: root.hasLiveContent
               anchors.right: parent.right
               anchors.rightMargin: Style.space(4)
               anchors.verticalCenter: parent.verticalCenter
@@ -455,7 +523,7 @@ Panel {
               anchors.right: parent.right
               anchors.rightMargin: Style.space(4)
               anchors.bottom: parent.bottom
-              text: "1 2 3 sports · enter live · r refresh · esc close"
+              text: "0 auto · 1 2 3 lock · click to pin · r refresh · esc close"
               color: root.dimmer
               font.family: root.fontFamily
               font.pixelSize: Style.font.caption
@@ -496,7 +564,7 @@ Panel {
           Column {
             spacing: Style.space(2)
             Text {
-              text: root.sportId === "sumo" ? "NEXT SESSION" : root.sportId === "cs" ? "NEXT MATCH WINDOW" : "GREEN FLAG"
+              text: root.viewedSport === "sumo" ? "NEXT SESSION" : root.viewedSport === "cs" ? "NEXT MATCH WINDOW" : "GREEN FLAG"
               color: root.dimmer
               font.family: root.fontFamily
               font.pixelSize: Style.font.caption
@@ -509,10 +577,13 @@ Panel {
               font.pixelSize: Style.font.bodySmall
             }
             Text {
+              visible: {
+                var next = event ? SportsModel.nextSession(event, root.now) : null
+                return next && root.hasClock(next)
+              }
               text: {
                 var next = event ? SportsModel.nextSession(event, root.now) : null
-                if (next) return root.fmtTime(next.startAt) + " your time"
-                return event ? root.fmtTime(event.startAt) + " your time" : ""
+                return next && root.hasClock(next) ? root.fmtTime(next.startAt) + " your time" : ""
               }
               color: root.dim
               font.family: root.fontFamily
@@ -521,9 +592,9 @@ Panel {
           }
           Text {
             text: {
-              var next = event ? SportsModel.nextSession(event, root.now) : null
-              var at = next ? next.startAt : (event ? event.weekendStartAt : null)
-              return root.countdownTo(at)
+              var at = SportsModel.nextAt(event, root.now)
+              if (!SportsTime.isInstant(at)) return ""
+              return SportsModel.eventIsDateOnly(event) ? root.dayCountdownTo(at) : root.countdownTo(at)
             }
             color: Color.accent
             font.family: root.fontFamily
@@ -533,7 +604,7 @@ Panel {
         }
 
         Row {
-          visible: root.sportId === "gt"
+          visible: root.viewedSport === "gt"
           spacing: Style.space(6)
           Repeater {
             model: [
@@ -573,9 +644,15 @@ Panel {
         }
       }
 
-      PanelSeparator { width: parent.width }
+      PanelSeparator {
+        width: parent.width
+        visible: (root.viewedSport === "sumo" ? root.sumo.schedule : (event && event.sessions ? event.sessions : [])).length > 0
+      }
       PanelSectionHeader {
-        text: "SCHEDULE · " + (event ? root.fmtRange(event.weekendStartAt, event.weekendEndAt) : "")
+        visible: (root.viewedSport === "sumo" ? root.sumo.schedule : (event && event.sessions ? event.sessions : [])).length > 0
+        text: root.viewedSport === "sumo"
+          ? "DAYS · " + root.sumo.daysLeft + " left"
+          : "SCHEDULE · " + (event ? root.fmtRange(event.weekendStartAt, event.weekendEndAt) : "")
         foreground: root.fg
         fontFamily: root.fontFamily
         leftPadding: Style.space(4)
@@ -583,16 +660,17 @@ Panel {
       Column {
         width: parent.width
         spacing: Style.space(1)
+        visible: (root.viewedSport === "sumo" ? root.sumo.schedule : (event && event.sessions ? event.sessions : [])).length > 0
         Repeater {
-          model: event ? event.sessions : []
+          model: root.viewedSport === "sumo" ? root.sumo.schedule : (event && event.sessions ? event.sessions : [])
           SessionRow {
             required property var modelData
             width: parent.width
             session: modelData
             state: root.stateOf(modelData)
             dayText: root.fmtDay(modelData.startAt)
-            timeText: modelData.dateOnly ? "—" : root.fmtTime(modelData.startAt)
-            countdownText: root.shortCountdownTo(modelData.startAt)
+            timeText: root.hasClock(modelData) ? root.fmtTime(modelData.startAt) : "—"
+            countdownText: modelData.dateOnly ? root.dayCountdownTo(modelData.startAt) : root.shortCountdownTo(modelData.startAt)
             foreground: root.fg
             fontFamily: root.fontFamily
           }
@@ -653,10 +731,42 @@ Panel {
         }
       }
 
+      PanelSeparator {
+        width: parent.width
+        visible: root.viewedSport === "sumo" && root.sumo.event && root.now >= root.sumo.event.weekendStartAt && root.sumo.yusho.length > 0
+      }
+      PanelSectionHeader {
+        visible: root.viewedSport === "sumo" && root.sumo.event && root.now >= root.sumo.event.weekendStartAt && root.sumo.yusho.length > 0
+        text: "YUSHO RACE · " + root.sumo.daysLeft + " days left"
+        foreground: root.fg
+        fontFamily: root.fontFamily
+        leftPadding: Style.space(4)
+      }
+      Column {
+        width: parent.width
+        visible: root.viewedSport === "sumo" && root.sumo.event && root.now >= root.sumo.event.weekendStartAt && root.sumo.yusho.length > 0
+        Repeater {
+          model: root.sumo.yusho.slice(0, 8)
+          StandingRow {
+            required property var modelData
+            width: parent.width
+            position: modelData.position
+            name: modelData.name
+            teamName: modelData.heya || modelData.rank || ""
+            valueText: modelData.record
+            clickable: true
+            pinned: SportsModel.matchPin(modelData, root.sumoPinPlayer)
+            onClicked: root.pinValue("sumoPlayer", modelData.name)
+            foreground: root.fg
+            fontFamily: root.fontFamily
+          }
+        }
+      }
+
       PanelSeparator { width: parent.width; visible: root.sport.playerStandings.top.length > 0 }
       PanelSectionHeader {
         visible: root.sport.playerStandings.top.length > 0
-        text: root.sportId === "cs" ? "PLAYERS" : root.sportId === "sumo" ? "MAKUUCHI" : "DRIVERS"
+        text: root.viewedSport === "cs" ? "PLAYERS" : root.viewedSport === "sumo" ? "MAKUUCHI" : "DRIVERS"
         foreground: root.fg
         fontFamily: root.fontFamily
         leftPadding: Style.space(4)
@@ -673,12 +783,14 @@ Panel {
             name: modelData.name
             code: modelData.code || ""
             teamName: modelData.teamName || modelData.rank || ""
-            teamColor: root.sportId === "gt" ? GtColors.colorFor(modelData.teamName) : CsColors.colorFor(modelData.teamName || modelData.name)
-            valueText: root.sportId === "sumo" ? modelData.record
-              : root.sportId === "cs" ? Number(modelData.points).toFixed(2)
+            teamColor: root.viewedSport === "gt" ? GtColors.colorFor(modelData.teamName) : CsColors.colorFor(modelData.teamName || modelData.name)
+            valueText: root.viewedSport === "sumo" ? modelData.record
+              : root.viewedSport === "cs" ? Number(modelData.points).toFixed(2)
               : String(modelData.points) + " pts"
-            noteText: root.sportId === "cs" && modelData.adr ? Math.round(modelData.adr) + " ADR" : (modelData.rank || "")
-            pinned: SportsModel.matchPin(modelData, root.sportId === "sumo" ? root.sumoHighlightPlayer : root.sportId === "gt" ? root.gtHighlightPlayer : root.csHighlightPlayer)
+            noteText: root.viewedSport === "cs" && modelData.adr ? Math.round(modelData.adr) + " ADR" : (modelData.rank || "")
+            clickable: true
+            pinned: SportsModel.matchPin(modelData, root.viewedSport === "sumo" ? root.sumoPinPlayer : root.viewedSport === "gt" ? root.gtPinPlayer : root.csPinPlayer)
+            onClicked: root.pinValue(root.viewedSport === "sumo" ? "sumoPlayer" : root.viewedSport === "gt" ? "gtPlayer" : "csPlayer", modelData.name)
             foreground: root.fg
             fontFamily: root.fontFamily
           }
@@ -700,7 +812,7 @@ Panel {
       PanelSeparator { width: parent.width; visible: root.sport.teamStandings.top.length > 0 }
       PanelSectionHeader {
         visible: root.sport.teamStandings.top.length > 0
-        text: root.sportId === "sumo" ? "HEYA" : "TEAMS"
+        text: root.viewedSport === "sumo" ? "HEYA" : "TEAMS"
         foreground: root.fg
         fontFamily: root.fontFamily
         leftPadding: Style.space(4)
@@ -718,9 +830,11 @@ Panel {
             teamName: ""
             showTeam: false
             teamColor: CsColors.colorFor(modelData.name)
-            valueText: root.sportId === "cs" ? String(modelData.points) + " pts" : String(modelData.points)
+            valueText: root.viewedSport === "cs" ? String(modelData.points) + " pts" : String(modelData.points)
             noteText: modelData.note || ""
-            pinned: SportsModel.matchPin(modelData, root.sportId === "sumo" ? root.sumoHighlightTeam : root.sportId === "gt" ? root.gtHighlightTeam : root.csHighlightTeam)
+            clickable: true
+            pinned: SportsModel.matchPin(modelData, root.viewedSport === "sumo" ? root.sumoPinTeam : root.viewedSport === "gt" ? root.gtPinTeam : root.csPinTeam)
+            onClicked: root.pinValue(root.viewedSport === "sumo" ? "sumoTeam" : root.viewedSport === "gt" ? "gtTeam" : "csTeam", modelData.name)
             foreground: root.fg
             fontFamily: root.fontFamily
           }
@@ -748,8 +862,8 @@ Panel {
       width: parent ? parent.width : 0
 
       readonly property bool empty: {
-        if (root.sportId === "cs") return root.cs.liveMatches.length === 0 && !root.live.hasData
-        if (root.sportId === "sumo") return root.sumo.torikumi.length === 0
+        if (root.viewedSport === "cs") return root.cs.liveMatches.length === 0 && !root.live.hasData
+        if (root.viewedSport === "sumo") return root.sumo.torikumi.length === 0
         return !root.live.hasData
       }
 
@@ -833,7 +947,7 @@ Panel {
         Column {
           width: parent.width
           spacing: Style.space(6)
-          visible: root.sportId === "cs"
+          visible: root.viewedSport === "cs"
           Repeater {
             model: root.cs.liveMatches.length > 0 ? root.cs.liveMatches : []
             MatchRow {
@@ -850,7 +964,7 @@ Panel {
 
         Column {
           width: parent.width
-          visible: root.sportId === "sumo"
+          visible: root.viewedSport === "sumo"
           Repeater {
             model: root.sumo.torikumi
             BoutRow {
@@ -865,7 +979,7 @@ Panel {
 
         Column {
           width: parent.width
-          visible: root.sportId === "gt"
+          visible: root.viewedSport === "gt"
           Repeater {
             model: root.live.grid
             LiveRow {

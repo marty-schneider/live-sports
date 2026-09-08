@@ -81,13 +81,56 @@ function nextSession(event, nowMs) {
   return null
 }
 
+function hasClock(session) {
+  return session && session.dateOnly !== true && SportsTime.isInstant(session.startAt)
+}
+
+function eventIsDateOnly(event) {
+  if (!event) return true
+  if (event.dateOnly === true) return true
+  var sessions = arrayOf(event.sessions)
+  if (sessions.length === 0) return true
+  for (var i = 0; i < sessions.length; i++) {
+    if (hasClock(sessions[i])) return false
+  }
+  return true
+}
+
+function nextAt(event, nowMs) {
+  var timed = nextSession(event, nowMs)
+  if (timed && hasClock(timed)) return timed.startAt
+  if (timed) return timed.startAt
+  if (event && SportsTime.isInstant(event.weekendStartAt) && event.weekendStartAt > nowMs)
+    return event.weekendStartAt
+  return null
+}
+
+function pickAutoSport(candidates, nowMs) {
+  var list = arrayOf(candidates)
+  for (var i = 0; i < list.length; i++) {
+    if (list[i] && list[i].live) return list[i].id
+  }
+  var bestId = null
+  var bestAt = null
+  for (var j = 0; j < list.length; j++) {
+    var c = list[j]
+    if (!c || !SportsTime.isInstant(c.nextAt)) continue
+    if (bestAt === null || c.nextAt < bestAt) {
+      bestAt = c.nextAt
+      bestId = c.id
+    }
+  }
+  return bestId || (list[0] ? list[0].id : "cs")
+}
+
 function weekendState(event, nowMs, liveLabel) {
   if (!event) return { label: "OFF SEASON", kind: "idle" }
   var live = liveSession(event, nowMs)
   if (live) return { label: (liveLabel || live.short) + " LIVE", kind: "live", session: live }
 
   var last = event.sessions && event.sessions.length > 0 ? event.sessions[event.sessions.length - 1] : null
-  if (last && SportsTime.isInstant(last.endAt) && nowMs >= last.endAt)
+  var endAt = event.weekendEndAt || event.endAt || (last && last.endAt)
+  if (SportsTime.isInstant(endAt) && nowMs >= endAt + SportsTime.DAY)
     return { label: "FINISHED", kind: "finished", session: last }
 
   var soon = null
@@ -98,7 +141,7 @@ function weekendState(event, nowMs, liveLabel) {
   }
   if (soon) return { label: soon.short + " STARTS SOON", kind: "soon", session: soon }
   if (SportsTime.isInstant(event.weekendStartAt) && nowMs >= event.weekendStartAt)
-    return { label: "EVENT WEEKEND", kind: "weekend", session: nextSession(event, nowMs) }
+    return { label: "UNDER WAY", kind: "weekend", session: nextSession(event, nowMs) }
   return { label: "NEXT", kind: "upcoming", session: nextSession(event, nowMs) || last }
 }
 
@@ -176,6 +219,10 @@ if (typeof module !== "undefined") {
     sessionState: sessionState,
     liveSession: liveSession,
     nextSession: nextSession,
+    hasClock: hasClock,
+    eventIsDateOnly: eventIsDateOnly,
+    nextAt: nextAt,
+    pickAutoSport: pickAutoSport,
     weekendState: weekendState,
     currentEventIndex: currentEventIndex,
     upcomingEvents: upcomingEvents,

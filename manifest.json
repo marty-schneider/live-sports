@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "io.github.marty-schneider.sports-tracker",
   "name": "Sports Tracker",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "author": "Marty Schneider",
   "license": "MIT",
   "description": "Sports Tracker: Counter-Strike Tier 1, Grand Sumo, and SRO GT World Challenge in one Omarchy bar panel.",
@@ -22,7 +22,7 @@
       "refreshMinutes": 15,
       "notifications": true,
       "notifyLeadMinutes": "30,15",
-      "defaultSport": "cs",
+      "defaultSport": "auto",
       "csHighlightPlayer": "donk",
       "csHighlightTeam": "Spirit",
       "sumoHighlightPlayer": "Onosato",
@@ -42,8 +42,8 @@
         "key": "defaultSport",
         "type": "enum",
         "label": "Default sport",
-        "options": ["cs", "sumo", "gt"],
-        "defaultValue": "cs"
+        "options": ["auto", "cs", "sumo", "gt"],
+        "defaultValue": "auto"
       },
       {
         "key": "autoLive",

@@ -13,6 +13,8 @@ QtObject {
   property var timeContext: ({ correctionMs: 0, hour12: false })
   property string leadMinutes: "30,15"
   property var sessionGroups: ["Race", "Match", "Makuuchi", "Qualifying", "Event"]
+  property string followedSport: ""
+  property var pinQueries: []
   property string appName: "Sports Tracker"
 
   property var fired: ({})
@@ -35,16 +37,43 @@ QtObject {
     return sessionGroups.indexOf(session.group) !== -1
   }
 
+  function follows(event) {
+    if (!event) return false
+    if (followedSport !== "" && event.sport === followedSport) return true
+    var pins = Array.isArray(pinQueries) ? pinQueries : []
+    for (var i = 0; i < pins.length; i++) {
+      var pin = pins[i]
+      if (!pin || !pin.value || pin.sport !== event.sport) continue
+      return true
+    }
+    return false
+  }
+
   function pendingSlots() {
     var slots = []
     var list = Array.isArray(events) ? events : []
     for (var e = 0; e < list.length; e++) {
       var event = list[e]
-      if (!event || !event.sessions) continue
-      for (var i = 0; i < event.sessions.length; i++) {
-        var session = event.sessions[i]
-        if (!wantsSession(session) || session.dateOnly) continue
-        var prefix = event.sport === "cs" ? "CS" : event.sport === "sumo" ? "Sumo" : "GT"
+      if (!follows(event)) continue
+      var prefix = event.short || (event.sport === "cs" ? "CS" : event.sport === "sumo" ? "Sumo" : "GT")
+      var sessions = event.sessions && event.sessions.length > 0 ? event.sessions : [{
+        key: "window", short: event.short || "EVENT", name: event.name, group: "Event",
+        startAt: event.weekendStartAt || event.startAt, endAt: event.weekendEndAt, dateOnly: true
+      }]
+      for (var i = 0; i < sessions.length; i++) {
+        var session = sessions[i]
+        if (!session || !SportsTime.isInstant(session.startAt)) continue
+        if (session.dateOnly) {
+          slots.push({
+            at: session.startAt,
+            key: event.id + "-" + session.key + "-day",
+            title: prefix + " · " + session.name,
+            body: event.name + " is today",
+            dateOnly: true
+          })
+          continue
+        }
+        if (!wantsSession(session)) continue
         for (var l = 0; l < leads.length; l++) {
           var lead = leads[l]
           slots.push({
@@ -72,9 +101,18 @@ QtObject {
     for (var i = 0; i < slots.length; i++) {
       var slot = slots[i]
       if (slot.key === "" || fired[slot.key]) continue
-      if (now < slot.at) continue
-      var overdue = now - slot.at > 15 * SportsTime.MINUTE
-      if (!overdue) send(slot.title, slot.body)
+      if (slot.dateOnly) {
+        if (!SportsTime.isSameLocalDay(slot.at, now, timeContext)) continue
+      } else {
+        if (now < slot.at) continue
+        var overdue = now - slot.at > 15 * SportsTime.MINUTE
+        if (overdue) {
+          fired[slot.key] = slot.at
+          changed = true
+          continue
+        }
+      }
+      send(slot.title, slot.body)
       fired[slot.key] = slot.at
       changed = true
     }

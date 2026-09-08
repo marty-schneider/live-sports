@@ -197,6 +197,20 @@ function shortCountdown(at, nowMs) {
   return pad2(b.minutes) + ":" + pad2(b.seconds)
 }
 
+// For dates we do not have a clock for. Never prints hours — that would
+// pretend kickoff is midnight.
+function dayCountdown(at, nowMs, ctx) {
+  if (!isInstant(at) || !isInstant(nowMs)) return "—"
+  var a = localDate(at, ctx)
+  var b = localDate(nowMs, ctx)
+  var aDay = Date.UTC(a.getFullYear(), a.getMonth(), a.getDate())
+  var bDay = Date.UTC(b.getFullYear(), b.getMonth(), b.getDate())
+  var days = Math.round((aDay - bDay) / DAY)
+  if (days < 0) return "now"
+  if (days === 0) return "today"
+  return days + "d"
+}
+
 // Freshness label for live timing and cached data: "8s ago", "4m ago".
 function agoText(at, nowMs) {
   if (!isInstant(at) || !isInstant(nowMs)) return "never"
@@ -227,6 +241,7 @@ if (typeof module !== "undefined") {
     breakdown: breakdown,
     countdown: countdown,
     shortCountdown: shortCountdown,
+    dayCountdown: dayCountdown,
     agoText: agoText
   }
 }

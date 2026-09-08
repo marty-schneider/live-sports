@@ -1,6 +1,6 @@
 # Sports Tracker for Omarchy
 
-**v0.3.0** — renamed Sports Tracker. Countdown pill, schedules, standings, and optional live feeds.
+**v0.4.0** — auto-sport pill, event-name countdown, click-to-pin, quieter notifications. Clocks only when a feed actually has a time.
 
 One bar pill and dashboard for three sports, with a switcher so more sports can be added later:
 
@@ -30,9 +30,13 @@ omarchy plugin enable io.github.marty-schneider.sports-tracker
 
 ## Use
 
-Click the pill. `1` / `2` / `3` (or the CS2 · SUMO · GT chips) switch sports. On GT, EU / AM / AS / AU filters the calendar. Enter toggles live mode, `r` refreshes, Escape closes.
+The pill follows whatever is next (or on now) unless you lock a sport with AUTO / CS2 / SUMO / GT. It shows the event, not the sport: `EPL 26d`, `AKI 6d`, `ZAND 11d`.
 
-The live view is sport-specific: CS map scores, Sumo East/West bouts, GT timing when a feed is configured. With nothing running it names the next session and the countdown, the same way F1 Live does.
+Click a player, team, rikishi, or heya to pin it. Notifications fire for the sport on the pill, plus any sport you have a pin in.
+
+Live mode only appears when there is something on — today’s unfinished CS maps, or a published Sumo card. No empty tower.
+
+On GT, EU / AM / AS / AU filters the calendar. `0` auto, `1` `2` `3` lock a sport, `r` refreshes, Escape closes.
 
 Right-click the pill to announce the next session. Middle-click forces a refresh.
 

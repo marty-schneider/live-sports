@@ -25,29 +25,42 @@ function seriesOf(eventName) {
   return "Tier 1"
 }
 
-// Remaining 2026 S-tier events the user asked for. Times are event windows;
-// match-level clocks come from live results when available.
+function shortOf(eventName, series) {
+  var l = SportsModel.str(eventName).toLowerCase()
+  if (/\bmajor\b/.test(l)) return "MAJOR"
+  if (/rivals/.test(l)) return "RIVALS"
+  if (/bounty/.test(l)) return "BOUNTY"
+  if (series === "ESL Pro League") return "EPL"
+  if (series === "IEM") return "IEM"
+  if (series === "BLAST") return "BLAST"
+  return SportsModel.str(series).slice(0, 5).toUpperCase() || "CS"
+}
+
+// Published event dates only. csapi.de gives match dates, not kickoff times.
 var SEED_EVENTS = [
-  { id: "blast-open-fall-2026", name: "BLAST Open Fall 2026", series: "BLAST", locality: "Porto", country: "Portugal", start: "2026-08-26T10:00:00Z", end: "2026-09-06T20:00:00Z" },
-  { id: "epl-s24", name: "ESL Pro League Season 24", series: "ESL Pro League", locality: "Katowice", country: "Poland", start: "2026-10-03T10:00:00Z", end: "2026-10-11T20:00:00Z" },
-  { id: "iem-beijing-2026", name: "IEM Beijing 2026", series: "IEM", locality: "Beijing", country: "China", start: "2026-11-02T04:00:00Z", end: "2026-11-08T14:00:00Z" },
-  { id: "blast-rivals-fall-2026", name: "BLAST Rivals Fall 2026", series: "BLAST", locality: "Hong Kong", country: "Hong Kong", start: "2026-11-09T04:00:00Z", end: "2026-11-15T14:00:00Z" },
-  { id: "pgl-singapore-major-2026", name: "PGL Singapore Major 2026", series: "Major", locality: "Singapore", country: "Singapore", start: "2026-11-25T04:00:00Z", end: "2026-12-13T16:00:00Z" }
+  { id: "blast-open-fall-2026", name: "BLAST Open Fall 2026", series: "BLAST", short: "BLAST", locality: "Porto", country: "Portugal", start: "2026-08-26", end: "2026-09-06" },
+  { id: "epl-s24", name: "ESL Pro League Season 24", series: "ESL Pro League", short: "EPL", locality: "Katowice", country: "Poland", start: "2026-10-03", end: "2026-10-11" },
+  { id: "iem-beijing-2026", name: "IEM Beijing 2026", series: "IEM", short: "IEM", locality: "Beijing", country: "China", start: "2026-11-02", end: "2026-11-08" },
+  { id: "blast-rivals-fall-2026", name: "BLAST Rivals Fall 2026", series: "BLAST", short: "RIVALS", locality: "Hong Kong", country: "Hong Kong", start: "2026-11-09", end: "2026-11-15" },
+  { id: "pgl-singapore-major-2026", name: "PGL Singapore Major 2026", series: "Major", short: "MAJOR", locality: "Singapore", country: "Singapore", start: "2026-11-25", end: "2026-12-13" }
 ]
 
+function parseDay(value) {
+  var s = SportsModel.str(value)
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return SportsTime.parseIso(s + "T00:00:00Z")
+  return SportsTime.parseIso(s)
+}
+
 function seedEvent(row) {
-  var startAt = SportsTime.parseIso(row.start)
-  var endAt = SportsTime.parseIso(row.end)
+  var startAt = parseDay(row.start)
+  var endAt = parseDay(row.end)
   if (!SportsTime.isInstant(startAt) || !SportsTime.isInstant(endAt)) return null
-  var sessions = [
-    SportsModel.makeSession({ key: "open", short: "START", name: "Event start", group: "Event", durationMin: 60 }, startAt, startAt + SportsTime.HOUR, false),
-    SportsModel.makeSession({ key: "final", short: "FINAL", name: "Grand final", group: "Match", durationMin: 180 }, endAt - 3 * SportsTime.HOUR, endAt, false)
-  ]
   return {
     id: row.id,
     sport: "cs",
     name: row.name,
     series: row.series,
+    short: row.short || shortOf(row.name, row.series),
     venue: row.series,
     locality: row.locality,
     country: row.country,
@@ -56,7 +69,8 @@ function seedEvent(row) {
     endAt: endAt,
     weekendStartAt: startAt,
     weekendEndAt: endAt,
-    sessions: sessions,
+    sessions: [],
+    dateOnly: true,
     round: 0,
     season: "2026"
   }
@@ -131,7 +145,7 @@ function parseMatches(raw) {
     var t1 = row.team1 && typeof row.team1 === "object" ? row.team1 : {}
     var t2 = row.team2 && typeof row.team2 === "object" ? row.team2 : {}
     var date = SportsModel.str(row.date)
-    var startAt = SportsTime.parseIso(date + "T16:00:00Z")
+    var startAt = parseDay(date)
     var finished = !!(row.winner && row.winner.name)
     out.push({
       id: SportsModel.int(row.id, i),
@@ -139,6 +153,7 @@ function parseMatches(raw) {
       series: seriesOf(eventName),
       date: date,
       startAt: startAt,
+      dateOnly: true,
       bestOf: SportsModel.int(row.best_of, 3),
       team1: { id: SportsModel.int(t1.id), name: SportsModel.str(t1.name), score: SportsModel.int(t1.score, 0), rank: SportsModel.int(t1.rank) },
       team2: { id: SportsModel.int(t2.id), name: SportsModel.str(t2.name), score: SportsModel.int(t2.score, 0), rank: SportsModel.int(t2.rank) },
@@ -196,6 +211,8 @@ if (typeof module !== "undefined") {
   module.exports = {
     isTier1: isTier1,
     seriesOf: seriesOf,
+    shortOf: shortOf,
+    parseDay: parseDay,
     SEED_EVENTS: SEED_EVENTS,
     seedCalendar: seedCalendar,
     parseRankings: parseRankings,

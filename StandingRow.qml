@@ -23,8 +23,10 @@ Rectangle {
   property string noteText: ""
   property bool pinned: false
   property bool showTeam: true
+  property bool clickable: false
   property color foreground: Color.foreground
   property string fontFamily: Style.font.family
+  signal clicked()
 
   implicitHeight: Math.max(content.implicitHeight, note.visible ? note.implicitHeight : 0) + Style.space(9)
   radius: Math.max(2, Style.cornerRadius)
@@ -120,6 +122,14 @@ Rectangle {
       font.family: root.fontFamily
       font.pixelSize: Style.font.caption
     }
+  }
+
+  MouseArea {
+    anchors.fill: parent
+    enabled: root.clickable
+    hoverEnabled: root.clickable
+    cursorShape: root.clickable ? Qt.PointingHandCursor : Qt.ArrowCursor
+    onClicked: root.clicked()
   }
 
   Accessible.role: Accessible.ListItem
