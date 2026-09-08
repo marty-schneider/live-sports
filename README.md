@@ -30,6 +30,20 @@ cd sports-tracker
 omarchy plugin enable io.github.marty-schneider.sports-tracker
 ```
 
+## Uninstall
+
+```sh
+omarchy plugin remove io.github.marty-schneider.sports-tracker
+```
+
+From a local clone:
+
+```sh
+./install.sh --remove
+```
+
+That removes the plugin from `~/.config/omarchy/plugins`. Cache and UI state under `~/.cache/omarchy/sports-tracker` and `~/.local/state/omarchy/sports-tracker` go with it. Keep them with `./install.sh --remove --keep-data`. Optional live tokens in `~/.config/omarchy/sports-tracker/credentials` are left in place; delete that file yourself if you added one.
+
 ## Use
 
 The pill follows whatever is next (or on now) among sports you follow, unless you lock a sport with the chips. It shows the event, not the sport: `EPL 5d`, `NFL 2d`, `AKI 6d`, `ZAND 11d`.
@@ -77,6 +91,8 @@ Selected sport, follow list, and favorite teams are remembered in `~/.local/stat
 | GT | Shipped 2026 SRO calendar (Europe Sprint + Endurance, America, Asia, Australia) | Optional SRO / Swiss Timing credentials |
 
 Nothing is hardcoded as “who is winning”. Rankings and results come from the APIs. The GT calendar is the one place with shipped dates, because SRO does not publish a public JSON feed.
+
+Network access is required. Fetches go through `curl` over HTTPS. There are no extra packages to install. Optional live tokens (PandaScore, SRO timing) are documented above and are not required.
 
 ### Paid live (optional)
 
