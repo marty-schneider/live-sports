@@ -93,6 +93,8 @@ function matchToEvent(match, meta) {
     weekendEndAt: match.startAt + duration,
     sessions: sessions,
     dateOnly: match.dateOnly === true,
+    team1Name: SportsModel.str(match.team1 && match.team1.name),
+    team2Name: SportsModel.str(match.team2 && match.team2.name),
     round: 0,
     season: ""
   }

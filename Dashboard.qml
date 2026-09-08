@@ -43,7 +43,9 @@ Panel {
   property string gtContinent: "all"
   property var pins: ({})
   property var followed: []
+  property var favorites: ({})
   property bool settingsOpen: false
+  property string settingsTeamSport: ""
   readonly property var sportIds: ["cs", "nfl", "nba", "mlb", "nhl", "epl", "seriea", "ligue1", "laliga", "sumo", "gt"]
   readonly property var sports: sportIds
   readonly property var sportCatalog: [
@@ -95,24 +97,28 @@ Panel {
     refreshMinutes: root.refreshMinutes
     highlightPlayer: root.csPinPlayer
     highlightTeam: root.csPinTeam
+    highlightTeams: root.favoritesOf("cs")
   }
   property SumoService sumo: SumoService {
     now: root.now
     refreshMinutes: root.refreshMinutes
     highlightPlayer: root.sumoPinPlayer
     highlightTeam: root.sumoPinTeam
+    highlightTeams: root.favoritesOf("sumo")
   }
   property GtService gt: GtService {
     now: root.now
     refreshMinutes: root.refreshMinutes
     highlightPlayer: root.gtPinPlayer
     highlightTeam: root.gtPinTeam
+    highlightTeams: root.favoritesOf("gt")
     continentFilter: root.gtContinent
   }
 
   property LeagueService nfl: LeagueService {
     sportId: "nfl"; title: "NFL"; shortName: "NFL"; durationMin: 210
     now: root.now; refreshMinutes: root.refreshMinutes
+    highlightTeams: root.favoritesOf("nfl")
     highlightTeam: root.pinOf("nfl", "team"); highlightPlayer: root.pinOf("nfl", "player")
     scoreboardUrl: "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard"
     standingsUrl: "https://site.api.espn.com/apis/v2/sports/football/nfl/standings"
@@ -121,6 +127,7 @@ Panel {
   property LeagueService nba: LeagueService {
     sportId: "nba"; title: "NBA"; shortName: "NBA"; durationMin: 150
     now: root.now; refreshMinutes: root.refreshMinutes
+    highlightTeams: root.favoritesOf("nba")
     highlightTeam: root.pinOf("nba", "team"); highlightPlayer: root.pinOf("nba", "player")
     scoreboardUrl: "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard"
     standingsUrl: "https://site.api.espn.com/apis/v2/sports/basketball/nba/standings"
@@ -129,6 +136,7 @@ Panel {
   property LeagueService mlb: LeagueService {
     sportId: "mlb"; title: "MLB"; shortName: "MLB"; durationMin: 210
     now: root.now; refreshMinutes: root.refreshMinutes
+    highlightTeams: root.favoritesOf("mlb")
     highlightTeam: root.pinOf("mlb", "team"); highlightPlayer: root.pinOf("mlb", "player")
     scoreboardUrl: "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard"
     standingsUrl: "https://site.api.espn.com/apis/v2/sports/baseball/mlb/standings"
@@ -137,6 +145,7 @@ Panel {
   property LeagueService nhl: LeagueService {
     sportId: "nhl"; title: "NHL"; shortName: "NHL"; durationMin: 150
     now: root.now; refreshMinutes: root.refreshMinutes
+    highlightTeams: root.favoritesOf("nhl")
     highlightTeam: root.pinOf("nhl", "team"); highlightPlayer: root.pinOf("nhl", "player")
     scoreboardUrl: "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard"
     standingsUrl: "https://site.api.espn.com/apis/v2/sports/hockey/nhl/standings"
@@ -145,6 +154,7 @@ Panel {
   property LeagueService epl: LeagueService {
     sportId: "epl"; title: "Premier League"; shortName: "EPL"; durationMin: 120
     now: root.now; refreshMinutes: root.refreshMinutes
+    highlightTeams: root.favoritesOf("epl")
     highlightTeam: root.pinOf("epl", "team"); highlightPlayer: root.pinOf("epl", "player")
     scoreboardUrl: "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard"
     standingsUrl: "https://site.api.espn.com/apis/v2/sports/soccer/eng.1/standings"
@@ -153,6 +163,7 @@ Panel {
   property LeagueService seriea: LeagueService {
     sportId: "seriea"; title: "Serie A"; shortName: "SERIE A"; durationMin: 120
     now: root.now; refreshMinutes: root.refreshMinutes
+    highlightTeams: root.favoritesOf("seriea")
     highlightTeam: root.pinOf("seriea", "team"); highlightPlayer: root.pinOf("seriea", "player")
     scoreboardUrl: "https://site.api.espn.com/apis/site/v2/sports/soccer/ita.1/scoreboard"
     standingsUrl: "https://site.api.espn.com/apis/v2/sports/soccer/ita.1/standings"
@@ -161,6 +172,7 @@ Panel {
   property LeagueService ligue1: LeagueService {
     sportId: "ligue1"; title: "Ligue 1"; shortName: "LIGUE 1"; durationMin: 120
     now: root.now; refreshMinutes: root.refreshMinutes
+    highlightTeams: root.favoritesOf("ligue1")
     highlightTeam: root.pinOf("ligue1", "team"); highlightPlayer: root.pinOf("ligue1", "player")
     scoreboardUrl: "https://site.api.espn.com/apis/site/v2/sports/soccer/fra.1/scoreboard"
     standingsUrl: "https://site.api.espn.com/apis/v2/sports/soccer/fra.1/standings"
@@ -169,6 +181,7 @@ Panel {
   property LeagueService laliga: LeagueService {
     sportId: "laliga"; title: "La Liga"; shortName: "LA LIGA"; durationMin: 120
     now: root.now; refreshMinutes: root.refreshMinutes
+    highlightTeams: root.favoritesOf("laliga")
     highlightTeam: root.pinOf("laliga", "team"); highlightPlayer: root.pinOf("laliga", "player")
     scoreboardUrl: "https://site.api.espn.com/apis/site/v2/sports/soccer/esp.1/scoreboard"
     standingsUrl: "https://site.api.espn.com/apis/v2/sports/soccer/esp.1/standings"
@@ -227,19 +240,75 @@ Panel {
     persistUi()
   }
 
+  function favoritesOf(id) {
+    return SportsModel.favoritesOf(favorites, id)
+  }
+
+  function isTeamFavorite(id, name) {
+    return SportsModel.isFavorite(favorites, id, name)
+  }
+
+  function toggleFavorite(id, name) {
+    favorites = SportsModel.toggleFavorite(favorites, id, name)
+    var names = favoritesOf(id)
+    if (id === "cs") csPinTeam = names.length > 0 ? names[0] : ""
+    else if (id === "sumo") sumoPinTeam = names.length > 0 ? names[0] : ""
+    else if (id === "gt") gtPinTeam = names.length > 0 ? names[0] : ""
+    persistUi()
+  }
+
+  function teamList(id) {
+    var svc = sportService(id)
+    if (id === "sumo") return svc.heyaRows || []
+    return svc.teamRows || []
+  }
+
+  function favoriteTrackRows(sportId) {
+    var names = favoritesOf(sportId)
+    var rows = teamList(sportId)
+    var svc = sportService(sportId)
+    var matches = svc.allMatches || svc.matches || []
+    var out = []
+    for (var i = 0; i < names.length; i++) {
+      var name = names[i]
+      var standing = null
+      for (var r = 0; r < rows.length; r++) {
+        if (SportsModel.involvesTeam(rows[r], [name])) { standing = rows[r]; break }
+      }
+      out.push({
+        name: standing ? standing.name : name,
+        position: standing ? standing.position : 0,
+        valueText: standing ? standingValue(standing) : "",
+        next: SportsModel.nextFavoriteMatch(matches, [name], now)
+      })
+    }
+    return out
+  }
+
   readonly property var autoCandidates: {
+    function row(id, svc) {
+      var names = root.favoritesOf(id)
+      var tracked = SportsModel.pickTrackedEvent(svc.events, names, root.now)
+      return {
+        id: id,
+        live: svc.liveMatches && svc.liveMatches.length > 0,
+        favoriteLive: SportsModel.anyFavoriteLive(svc.liveMatches, names),
+        nextAt: SportsModel.nextAt(svc.event, root.now),
+        favoriteNextAt: SportsModel.nextAt(tracked, root.now)
+      }
+    }
     var all = [
-      { id: "cs", live: root.cs.liveMatches.length > 0, nextAt: SportsModel.nextAt(root.cs.event, root.now) },
-      { id: "nfl", live: root.nfl.liveMatches.length > 0, nextAt: SportsModel.nextAt(root.nfl.event, root.now) },
-      { id: "nba", live: root.nba.liveMatches.length > 0, nextAt: SportsModel.nextAt(root.nba.event, root.now) },
-      { id: "mlb", live: root.mlb.liveMatches.length > 0, nextAt: SportsModel.nextAt(root.mlb.event, root.now) },
-      { id: "nhl", live: root.nhl.liveMatches.length > 0, nextAt: SportsModel.nextAt(root.nhl.event, root.now) },
-      { id: "epl", live: root.epl.liveMatches.length > 0, nextAt: SportsModel.nextAt(root.epl.event, root.now) },
-      { id: "seriea", live: root.seriea.liveMatches.length > 0, nextAt: SportsModel.nextAt(root.seriea.event, root.now) },
-      { id: "ligue1", live: root.ligue1.liveMatches.length > 0, nextAt: SportsModel.nextAt(root.ligue1.event, root.now) },
-      { id: "laliga", live: root.laliga.liveMatches.length > 0, nextAt: SportsModel.nextAt(root.laliga.event, root.now) },
-      { id: "sumo", live: root.sumo.liveMatches.length > 0, nextAt: SportsModel.nextAt(root.sumo.event, root.now) },
-      { id: "gt", live: root.gt.liveMatches.length > 0, nextAt: SportsModel.nextAt(root.gt.event, root.now) }
+      row("cs", root.cs),
+      row("nfl", root.nfl),
+      row("nba", root.nba),
+      row("mlb", root.mlb),
+      row("nhl", root.nhl),
+      row("epl", root.epl),
+      row("seriea", root.seriea),
+      row("ligue1", root.ligue1),
+      row("laliga", root.laliga),
+      row("sumo", root.sumo),
+      row("gt", root.gt)
     ]
     var out = []
     for (var i = 0; i < all.length; i++) {
@@ -275,31 +344,58 @@ Panel {
   }
 
   readonly property var live: viewedSport === "sumo" ? sumoLive : viewedSport === "gt" ? gtLive : csLive
-  readonly property bool hasLiveContent: !!(sport && sport.liveMatches && sport.liveMatches.length > 0)
+  readonly property bool hasLiveContent: {
+    if (!sport || !sport.liveMatches || sport.liveMatches.length === 0) return false
+    var names = favoritesOf(viewedSport)
+    if (names.length === 0) return true
+    return SportsModel.anyFavoriteLive(sport.liveMatches, names)
+  }
+
+  readonly property var notifyEvents: {
+    var out = []
+    var seen = {}
+    function add(ev) {
+      if (!ev || !ev.id || seen[ev.id]) return
+      seen[ev.id] = true
+      out.push(ev)
+    }
+    add(cs.event); add(nfl.event); add(nba.event); add(mlb.event); add(nhl.event)
+    add(epl.event); add(seriea.event); add(ligue1.event); add(laliga.event); add(sumo.event); add(gt.event)
+    var ids = followedIds
+    for (var i = 0; i < ids.length; i++) {
+      var svc = sportService(ids[i])
+      var names = favoritesOf(ids[i])
+      if (names.length === 0 || !svc.events) continue
+      for (var e = 0; e < svc.events.length; e++) {
+        if (SportsModel.involvesTeam(svc.events[e], names)) add(svc.events[e])
+      }
+    }
+    return out
+  }
+
+  readonly property var notifyPins: {
+    var out = [
+      { sport: "cs", value: root.csPinPlayer, kind: "player" },
+      { sport: "sumo", value: root.sumoPinPlayer, kind: "player" },
+      { sport: "gt", value: root.gtPinPlayer, kind: "player" }
+    ]
+    var ids = sportIds
+    for (var i = 0; i < ids.length; i++) {
+      var names = favoritesOf(ids[i])
+      for (var n = 0; n < names.length; n++)
+        out.push({ sport: ids[i], value: names[n], kind: "team" })
+    }
+    return out
+  }
 
   property Notifier notifier: Notifier {
     now: root.now
     enabled: root.notificationsEnabled
-    events: (cs.event ? [cs.event] : []).concat(nfl.event ? [nfl.event] : []).concat(nba.event ? [nba.event] : []).concat(mlb.event ? [mlb.event] : []).concat(nhl.event ? [nhl.event] : []).concat(epl.event ? [epl.event] : []).concat(seriea.event ? [seriea.event] : []).concat(ligue1.event ? [ligue1.event] : []).concat(laliga.event ? [laliga.event] : []).concat(sumo.event ? [sumo.event] : []).concat(gt.event ? [gt.event] : [])
+    events: root.notifyEvents
     timeContext: root.timeCtx
     leadMinutes: root.notifyLeadMinutes
     followedSport: root.viewedSport
-    pinQueries: [
-      { sport: "cs", value: root.csPinTeam },
-      { sport: "cs", value: root.csPinPlayer },
-      { sport: "sumo", value: root.sumoPinPlayer },
-      { sport: "sumo", value: root.sumoPinTeam },
-      { sport: "gt", value: root.gtPinPlayer },
-      { sport: "gt", value: root.gtPinTeam },
-      { sport: "nfl", value: root.pinOf("nfl", "team") },
-      { sport: "nba", value: root.pinOf("nba", "team") },
-      { sport: "mlb", value: root.pinOf("mlb", "team") },
-      { sport: "nhl", value: root.pinOf("nhl", "team") },
-      { sport: "epl", value: root.pinOf("epl", "team") },
-      { sport: "seriea", value: root.pinOf("seriea", "team") },
-      { sport: "ligue1", value: root.pinOf("ligue1", "team") },
-      { sport: "laliga", value: root.pinOf("laliga", "team") }
-    ]
+    pinQueries: root.notifyPins
   }
 
   property string liveOverride: ""
@@ -335,12 +431,13 @@ Panel {
 
   function setPin(id, role, name) {
     var value = String(name || "")
+    if (role === "team") {
+      toggleFavorite(id, value)
+      return
+    }
     if (id === "cs" && role === "player") csPinPlayer = csPinPlayer === value ? "" : value
-    else if (id === "cs" && role === "team") csPinTeam = csPinTeam === value ? "" : value
     else if (id === "sumo" && role === "player") sumoPinPlayer = sumoPinPlayer === value ? "" : value
-    else if (id === "sumo" && role === "team") sumoPinTeam = sumoPinTeam === value ? "" : value
     else if (id === "gt" && role === "player") gtPinPlayer = gtPinPlayer === value ? "" : value
-    else if (id === "gt" && role === "team") gtPinTeam = gtPinTeam === value ? "" : value
     else {
       var next = {}
       for (var k in pins) next[k] = pins[k]
@@ -358,6 +455,7 @@ Panel {
       sportLock: sportLock,
       gtContinent: gtContinent,
       followed: followedIds,
+      favorites: favorites,
       pins: {
         csPlayer: csPinPlayer, csTeam: csPinTeam,
         sumoPlayer: sumoPinPlayer, sumoTeam: sumoPinTeam,
@@ -371,6 +469,11 @@ Panel {
     var parsed = SportsModel.safeParse(raw)
     if (!parsed) {
       if (defaultSport === "auto" || sports.indexOf(defaultSport) >= 0) sportLock = defaultSport
+      favorites = SportsModel.seedFavorites({}, [
+        { sport: "cs", name: csPinTeam },
+        { sport: "sumo", name: sumoPinTeam },
+        { sport: "gt", name: gtPinTeam }
+      ])
       return
     }
     if (parsed.sportLock === "auto" || sports.indexOf(parsed.sportLock) >= 0) sportLock = parsed.sportLock
@@ -385,6 +488,17 @@ Panel {
     if (pins.gtPlayer !== undefined) gtPinPlayer = pins.gtPlayer
     if (pins.gtTeam !== undefined) gtPinTeam = pins.gtTeam
     if (pins.leagues && typeof pins.leagues === "object") root.pins = pins.leagues
+    var fav = parsed.favorites && typeof parsed.favorites === "object" ? parsed.favorites : {}
+    var seeds = []
+    if (csPinTeam) seeds.push({ sport: "cs", name: csPinTeam })
+    if (sumoPinTeam) seeds.push({ sport: "sumo", name: sumoPinTeam })
+    if (gtPinTeam) seeds.push({ sport: "gt", name: gtPinTeam })
+    var leaguePins = pins.leagues || {}
+    for (var sportId in leaguePins) {
+      if (leaguePins[sportId] && leaguePins[sportId].team)
+        seeds.push({ sport: sportId, name: leaguePins[sportId].team })
+    }
+    favorites = SportsModel.seedFavorites(fav, seeds)
   }
 
   property FileView uiFile: FileView {
@@ -439,6 +553,10 @@ Panel {
   function onOpened() {
     timeSvc.refreshZone()
     sport.refresh(false)
+  }
+  onSettingsOpenChanged: {
+    if (settingsOpen && followedIds.indexOf(settingsTeamSport) < 0)
+      settingsTeamSport = viewedSport
   }
   function close() {
     setCenterHoverRevealSuppressed(false)
@@ -746,7 +864,7 @@ Panel {
               anchors.bottom: parent.bottom
               text: root.settingsOpen
                 ? "toggle sports to follow · s or esc back"
-                : "0 auto · gear follows · click to pin · r refresh · esc close"
+                : "0 auto · gear follows · click a team to fav · r refresh · esc close"
               color: root.dimmer
               font.family: root.fontFamily
               font.pixelSize: Style.font.caption
@@ -826,6 +944,90 @@ Panel {
           }
         }
       }
+
+      PanelSeparator { width: parent.width }
+
+      PanelSectionHeader {
+        text: "TEAMS · " + root.favoritesOf(root.settingsTeamSport).length + " fav"
+        foreground: root.fg
+        fontFamily: root.fontFamily
+        leftPadding: Style.space(4)
+      }
+
+      Text {
+        width: parent.width
+        leftPadding: Style.space(4)
+        rightPadding: Style.space(4)
+        wrapMode: Text.WordWrap
+        text: "Favorite teams to track. AUTO, the pill, and notifications follow their games. Click a standings row to star one too."
+        color: root.dim
+        font.family: root.fontFamily
+        font.pixelSize: Style.font.caption
+      }
+
+      Flow {
+        width: parent.width
+        leftPadding: Style.space(4)
+        spacing: Style.space(6)
+        Repeater {
+          model: root.followedIds
+          Rectangle {
+            required property var modelData
+            readonly property bool selected: root.settingsTeamSport === modelData
+            implicitWidth: teamChipText.implicitWidth + Style.space(16)
+            implicitHeight: teamChipText.implicitHeight + Style.space(8)
+            radius: Math.max(2, Style.cornerRadius)
+            color: selected ? Util.alpha(Color.accent, 0.18) : Util.alpha(root.fg, 0.05)
+            border.width: selected ? 1 : 0
+            border.color: Util.alpha(Color.accent, 0.5)
+            Text {
+              id: teamChipText
+              anchors.centerIn: parent
+              text: root.chipLabel(modelData)
+              color: selected ? Color.accent : root.dim
+              font.family: root.fontFamily
+              font.pixelSize: Style.font.caption
+              font.bold: selected
+              font.letterSpacing: 0.8
+            }
+            MouseArea {
+              anchors.fill: parent
+              cursorShape: Qt.PointingHandCursor
+              onClicked: root.settingsTeamSport = modelData
+            }
+          }
+        }
+      }
+
+      Column {
+        width: parent.width
+        spacing: Style.space(4)
+        visible: root.teamList(root.settingsTeamSport).length > 0
+        Repeater {
+          model: root.teamList(root.settingsTeamSport)
+          Toggle {
+            required property var modelData
+            width: parent.width
+            label: modelData.name
+            description: modelData.note || (modelData.position ? "P" + modelData.position : "")
+            checked: root.isTeamFavorite(root.settingsTeamSport, modelData.name)
+            foreground: root.fg
+            fontFamily: root.fontFamily
+            onClicked: root.toggleFavorite(root.settingsTeamSport, modelData.name)
+          }
+        }
+      }
+
+      Text {
+        width: parent.width
+        visible: root.teamList(root.settingsTeamSport).length === 0
+        leftPadding: Style.space(4)
+        wrapMode: Text.WordWrap
+        text: "No team list yet for " + root.chipLabel(root.settingsTeamSport) + "."
+        color: root.dim
+        font.family: root.fontFamily
+        font.pixelSize: Style.font.body
+      }
     }
   }
 
@@ -897,42 +1099,83 @@ Panel {
             font.bold: true
           }
         }
+      }
 
-        Row {
-          visible: root.viewedSport === "gt"
-          spacing: Style.space(6)
-          Repeater {
-            model: [
-              { id: "all", label: "ALL" },
-              { id: "Europe", label: "EU" },
-              { id: "America", label: "AM" },
-              { id: "Asia", label: "AS" },
-              { id: "Australia", label: "AU" }
-            ]
-            Rectangle {
-              required property var modelData
-              implicitWidth: cLab.implicitWidth + Style.space(12)
-              implicitHeight: cLab.implicitHeight + Style.space(6)
-              radius: Math.max(2, Style.cornerRadius)
-              color: root.gtContinent === modelData.id ? Util.alpha(Color.accent, 0.18) : Util.alpha(root.fg, 0.05)
-              border.width: root.gtContinent === modelData.id ? 1 : 0
-              border.color: Util.alpha(Color.accent, 0.5)
-              Text {
-                id: cLab
-                anchors.centerIn: parent
-                text: modelData.label
-                color: root.gtContinent === modelData.id ? Color.accent : root.dim
-                font.family: root.fontFamily
-                font.pixelSize: Style.font.caption
-                font.bold: root.gtContinent === modelData.id
-              }
-              MouseArea {
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                onClicked: {
-                  root.gtContinent = modelData.id
-                  root.persistUi()
-                }
+      Column {
+        width: parent.width
+        visible: root.favoriteTrackRows(root.viewedSport).length > 0
+        spacing: Style.space(6)
+        PanelSeparator { width: parent.width }
+        PanelSectionHeader {
+          text: "YOUR TEAMS"
+          foreground: root.fg
+          fontFamily: root.fontFamily
+          leftPadding: Style.space(4)
+        }
+        Repeater {
+          model: root.favoriteTrackRows(root.viewedSport)
+          StandingRow {
+            required property var modelData
+            width: parent.width
+            position: modelData.position
+            positionPrefix: modelData.position ? "P" : ""
+            name: modelData.name
+            showTeam: false
+            teamColor: CsColors.colorFor(modelData.name)
+            valueText: modelData.valueText
+            noteText: {
+              var m = modelData.next
+              if (!m) return "FAV"
+              if (m.live) return "LIVE"
+              if (m.finished) return (m.team1 && m.team2) ? (m.team1.score + "–" + m.team2.score) : "FAV"
+              var at = m.startAt
+              if (!SportsTime.isInstant(at)) return "FAV"
+              return m.dateOnly ? root.dayCountdownTo(at) : root.shortCountdownTo(at)
+            }
+            clickable: true
+            pinned: true
+            onClicked: root.toggleFavorite(root.viewedSport, modelData.name)
+            foreground: root.fg
+            fontFamily: root.fontFamily
+          }
+        }
+      }
+
+      Row {
+        visible: root.viewedSport === "gt"
+        leftPadding: Style.space(4)
+        spacing: Style.space(6)
+        Repeater {
+          model: [
+            { id: "all", label: "ALL" },
+            { id: "Europe", label: "EU" },
+            { id: "America", label: "AM" },
+            { id: "Asia", label: "AS" },
+            { id: "Australia", label: "AU" }
+          ]
+          Rectangle {
+            required property var modelData
+            implicitWidth: cLab.implicitWidth + Style.space(12)
+            implicitHeight: cLab.implicitHeight + Style.space(6)
+            radius: Math.max(2, Style.cornerRadius)
+            color: root.gtContinent === modelData.id ? Util.alpha(Color.accent, 0.18) : Util.alpha(root.fg, 0.05)
+            border.width: root.gtContinent === modelData.id ? 1 : 0
+            border.color: Util.alpha(Color.accent, 0.5)
+            Text {
+              id: cLab
+              anchors.centerIn: parent
+              text: modelData.label
+              color: root.gtContinent === modelData.id ? Color.accent : root.dim
+              font.family: root.fontFamily
+              font.pixelSize: Style.font.caption
+              font.bold: root.gtContinent === modelData.id
+            }
+            MouseArea {
+              anchors.fill: parent
+              cursorShape: Qt.PointingHandCursor
+              onClicked: {
+                root.gtContinent = modelData.id
+                root.persistUi()
               }
             }
           }
@@ -1130,23 +1373,29 @@ Panel {
             valueText: root.standingValue(modelData)
             noteText: root.viewedSport === "cs" ? (modelData.note || "") : ""
             clickable: true
-            pinned: SportsModel.matchPin(modelData, root.pinOf(root.viewedSport, "team"))
-            onClicked: root.setPin(root.viewedSport, "team", modelData.name)
+            pinned: root.isTeamFavorite(root.viewedSport, modelData.name)
+            onClicked: root.toggleFavorite(root.viewedSport, modelData.name)
             foreground: root.fg
             fontFamily: root.fontFamily
           }
         }
-        StandingRow {
-          visible: root.sport.teamStandings.pin !== null
-          width: parent.width
-          position: root.sport.teamStandings.pin ? root.sport.teamStandings.pin.position : 0
-          name: root.sport.teamStandings.pin ? root.sport.teamStandings.pin.name : ""
-          showTeam: false
-          valueText: root.standingValue(root.sport.teamStandings.pin)
-          noteText: root.sport.teamStandings.gap !== null ? root.sport.teamStandings.gap + " behind leader" : "PINNED"
-          pinned: true
-          foreground: root.fg
-          fontFamily: root.fontFamily
+        Repeater {
+          model: root.sport.teamStandings.extras || []
+          StandingRow {
+            required property var modelData
+            width: parent.width
+            position: modelData.position
+            name: modelData.name
+            showTeam: false
+            teamColor: CsColors.colorFor(modelData.name)
+            valueText: root.standingValue(modelData)
+            noteText: "FAV"
+            clickable: true
+            pinned: true
+            onClicked: root.toggleFavorite(root.viewedSport, modelData.name)
+            foreground: root.fg
+            fontFamily: root.fontFamily
+          }
         }
       }
     }
@@ -1243,7 +1492,16 @@ Panel {
           spacing: Style.space(6)
           visible: root.viewedSport !== "sumo" && root.viewedSport !== "gt"
           Repeater {
-            model: root.sport && root.sport.liveMatches ? root.sport.liveMatches : []
+            model: {
+              var live = root.sport && root.sport.liveMatches ? root.sport.liveMatches : []
+              var names = root.favoritesOf(root.viewedSport)
+              if (names.length === 0) return live
+              var out = []
+              for (var i = 0; i < live.length; i++) {
+                if (SportsModel.involvesTeam(live[i], names)) out.push(live[i])
+              }
+              return out.length > 0 ? out : live
+            }
             MatchRow {
               required property var modelData
               width: parent.width

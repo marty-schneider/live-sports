@@ -10,6 +10,7 @@ QtObject {
   property int refreshMinutes: 15
   property string highlightPlayer: ""
   property string highlightTeam: ""
+  property var highlightTeams: []
   readonly property string title: "Grand Sumo"
 
   property var events: []
@@ -38,7 +39,7 @@ QtObject {
   readonly property var weekend: SportsModel.weekendState(event, now, "SUMO")
   readonly property var liveSession: event ? SportsModel.liveSession(event, now) : null
   readonly property var playerStandings: SportsModel.standingsWithPin(rikishi, 5, highlightPlayer)
-  readonly property var teamStandings: SportsModel.standingsWithPin(heyaRows, 5, highlightTeam)
+  readonly property var teamStandings: SportsModel.standingsWithFavorites(heyaRows, 5, highlightTeams && highlightTeams.length > 0 ? highlightTeams : (highlightTeam ? [highlightTeam] : []))
   readonly property var recent: []
   readonly property var liveMatches: torikumi
   readonly property int daysLeft: SumoModel.remainingDays(event, now)

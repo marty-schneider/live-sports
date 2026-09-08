@@ -103,6 +103,37 @@ assert("followed unknown falls back to all", SportsModel.normalizeFollowed(["nop
 assert("cannot unfollow the last sport", SportsModel.toggleFollowed(["cs"], "cs", ["cs", "nfl"]).join(",") === "cs")
 assert("unfollow one of many", SportsModel.toggleFollowed(["cs", "nfl"], "cs", ["cs", "nfl", "sumo"]).join(",") === "nfl")
 assert("follow adds back in catalog order", SportsModel.toggleFollowed(["nfl"], "cs", ["cs", "nfl", "sumo"]).join(",") === "cs,nfl")
+assert("auto-sport prefers favorite live", SportsModel.pickAutoSport([
+  { id: "nfl", live: true, nextAt: 50 },
+  { id: "mlb", live: true, favoriteLive: true, nextAt: 80 }
+], 0) === "mlb")
+assert("favorite toggle adds and removes", (function() {
+  var one = SportsModel.toggleFavorite({}, "nfl", "Buffalo Bills")
+  var two = SportsModel.toggleFavorite(one, "nfl", "Kansas City Chiefs")
+  var back = SportsModel.toggleFavorite(two, "nfl", "Buffalo Bills")
+  return SportsModel.favoritesOf(two, "nfl").join(",") === "Buffalo Bills,Kansas City Chiefs"
+    && SportsModel.favoritesOf(back, "nfl").join(",") === "Kansas City Chiefs"
+})())
+assert("involvesTeam matches home or away", SportsModel.involvesTeam({
+  name: "Patriots at Seahawks", team1Name: "New England Patriots", team2Name: "Seattle Seahawks"
+}, ["Seattle Seahawks"]) === true)
+assert("involvesTeam ignores bystanders", SportsModel.involvesTeam({
+  name: "Patriots at Seahawks", team1Name: "New England Patriots", team2Name: "Seattle Seahawks"
+}, ["Buffalo Bills"]) === false)
+assert("tracked event prefers the favorite", SportsModel.pickTrackedEvent([
+  { id: "a", name: "A at B", team1Name: "A", team2Name: "B", startAt: 100, endAt: 200 },
+  { id: "b", name: "Yanks at Sox", team1Name: "Yankees", team2Name: "Red Sox", startAt: 300, endAt: 400 }
+], ["Yankees"], 0).id === "b")
+const favTable = SportsModel.standingsWithFavorites([
+  { id: 1, name: "A", points: 10, position: 1 },
+  { id: 2, name: "B", points: 9, position: 2 },
+  { id: 3, name: "C", points: 8, position: 3 },
+  { id: 4, name: "D", points: 7, position: 4 },
+  { id: 5, name: "E", points: 6, position: 5 },
+  { id: 6, name: "Spirit", points: 4, position: 8 }
+], 5, ["Spirit"])
+assert("favorite outside top 5 is an extra row", favTable.extras.length === 1 && favTable.extras[0].name === "Spirit")
+assert("seed favorites from old pins", SportsModel.favoritesOf(SportsModel.seedFavorites({}, [{ sport: "cs", name: "Spirit" }]), "cs").join(",") === "Spirit")
 assert("day countdown today", SportsTime.dayCountdown(0, 0, SportsTime.defaultContext()) === "today")
 assert("day countdown future", SportsTime.dayCountdown(3 * SportsTime.DAY, 0, SportsTime.defaultContext()) === "3d")
 

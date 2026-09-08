@@ -1,6 +1,6 @@
 # Sports Tracker for Omarchy
 
-**v0.6.0** — Follow only the sports you care about. Gear on the panel toggles the list; chips and AUTO ignore the rest.
+**v0.7.0** — Favorite teams to track. Click a standings row or use the gear; AUTO, the pill, and notifications follow those games.
 
 One bar pill and dashboard, with a switcher so more sports can be added later:
 
@@ -36,7 +36,7 @@ The pill follows whatever is next (or on now) among sports you follow, unless yo
 
 The gear opens a follow list. Turn sports off to hide their chips. AUTO only looks at what you follow. `s` toggles that list; Escape goes back.
 
-Click a player, team, rikishi, or heya to pin it. Notifications fire for the sport on the pill, plus any sport you have a pin in.
+Click a team or heya to favorite it (several per sport). The gear also lists every club. AUTO, the pill, and notifications follow those games. Player pins stay as they were.
 
 Live mode only appears when there is something on — in-progress games on the ESPN scoreboard, today’s unfinished CS maps, or a published Sumo card. No empty tower.
 
@@ -62,7 +62,7 @@ On the plugin’s `shell.json` entry:
 }
 ```
 
-Selected sport and the follow list are remembered in `~/.local/state/omarchy/sports-tracker/ui.json`.
+Selected sport, follow list, and favorite teams are remembered in `~/.local/state/omarchy/sports-tracker/ui.json`.
 
 ## Data sources
 

@@ -10,6 +10,7 @@ QtObject {
   property int refreshMinutes: 15
   property string highlightPlayer: ""
   property string highlightTeam: ""
+  property var highlightTeams: []
 
   property string sportId: ""
   property string title: ""
@@ -37,12 +38,31 @@ QtObject {
   readonly property var recent: split.recent.slice(0, 8)
   readonly property var events: LeagueModel.eventsFromMatches(split, meta, now)
   readonly property int currentIndex: SportsModel.currentEventIndex(events, now)
-  readonly property var event: currentIndex >= 0 ? events[currentIndex] : null
-  readonly property var upcoming: SportsModel.upcomingEvents(events, currentIndex, 3)
+  readonly property var event: {
+    var tracked = SportsModel.pickTrackedEvent(events, highlightTeams, now)
+    if (tracked) return tracked
+    return currentIndex >= 0 ? events[currentIndex] : null
+  }
+  readonly property int shownIndex: {
+    if (!event || !events) return currentIndex
+    for (var i = 0; i < events.length; i++) {
+      if (events[i] && events[i].id === event.id) return i
+    }
+    return currentIndex
+  }
+  readonly property var upcoming: SportsModel.upcomingEvents(events, shownIndex, 3)
   readonly property var weekend: SportsModel.weekendState(event, now, shortName)
   readonly property var liveSession: {
-    if (liveMatches.length > 0) {
-      var first = liveMatches[0]
+    var first = null
+    var names = highlightTeams
+    if (names && names.length > 0) {
+      for (var i = 0; i < liveMatches.length; i++) {
+        if (SportsModel.involvesTeam(liveMatches[i], names)) { first = liveMatches[i]; break }
+      }
+    } else if (liveMatches.length > 0) {
+      first = liveMatches[0]
+    }
+    if (first) {
       return {
         key: "live",
         short: shortName,
@@ -56,7 +76,7 @@ QtObject {
     return event ? SportsModel.liveSession(event, now) : null
   }
   readonly property var playerStandings: SportsModel.standingsWithPin(playerRows, 5, highlightPlayer)
-  readonly property var teamStandings: SportsModel.standingsWithPin(teamRows, 5, highlightTeam)
+  readonly property var teamStandings: SportsModel.standingsWithFavorites(teamRows, 5, highlightTeams && highlightTeams.length > 0 ? highlightTeams : (highlightTeam ? [highlightTeam] : []))
   readonly property bool waitingOnNext: nextUrl !== "" && (upcomingFetch.status === "idle" || upcomingFetch.status === "loading")
   readonly property bool offSeason: loaded && events.length === 0 && !waitingOnNext
   readonly property bool loaded: matches.length > 0 || teamRows.length > 0 || extraUpcoming.length > 0

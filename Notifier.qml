@@ -37,13 +37,28 @@ QtObject {
     return sessionGroups.indexOf(session.group) !== -1
   }
 
+  function teamsFor(sport) {
+    var out = []
+    var pins = Array.isArray(pinQueries) ? pinQueries : []
+    for (var i = 0; i < pins.length; i++) {
+      var pin = pins[i]
+      if (!pin || !pin.value || pin.sport !== sport) continue
+      if (pin.kind === "player") continue
+      out.push(pin.value)
+    }
+    return out
+  }
+
   function follows(event) {
     if (!event) return false
-    if (followedSport !== "" && event.sport === followedSport) return true
+    var teams = teamsFor(event.sport)
+    if (teams.length > 0 && SportsModel.involvesTeam(event, teams)) return true
+    if (followedSport !== "" && event.sport === followedSport && teams.length === 0) return true
     var pins = Array.isArray(pinQueries) ? pinQueries : []
     for (var i = 0; i < pins.length; i++) {
       var pin = pins[i]
       if (!pin || !pin.value || pin.sport !== event.sport) continue
+      if (pin.kind === "team") continue
       return true
     }
     return false

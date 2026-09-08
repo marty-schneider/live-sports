@@ -108,15 +108,20 @@ function nextAt(event, nowMs) {
 function pickAutoSport(candidates, nowMs) {
   var list = arrayOf(candidates)
   for (var i = 0; i < list.length; i++) {
-    if (list[i] && list[i].live) return list[i].id
+    if (list[i] && list[i].favoriteLive) return list[i].id
+  }
+  for (var j = 0; j < list.length; j++) {
+    if (list[j] && list[j].live) return list[j].id
   }
   var bestId = null
   var bestAt = null
-  for (var j = 0; j < list.length; j++) {
-    var c = list[j]
-    if (!c || !SportsTime.isInstant(c.nextAt)) continue
-    if (bestAt === null || c.nextAt < bestAt) {
-      bestAt = c.nextAt
+  for (var k = 0; k < list.length; k++) {
+    var c = list[k]
+    if (!c) continue
+    var at = SportsTime.isInstant(c.favoriteNextAt) ? c.favoriteNextAt : c.nextAt
+    if (!SportsTime.isInstant(at)) continue
+    if (bestAt === null || at < bestAt) {
+      bestAt = at
       bestId = c.id
     }
   }
@@ -187,6 +192,126 @@ function upcomingEvents(events, currentIndex, count) {
   return events.slice(currentIndex + 1, currentIndex + 1 + (count || 3))
 }
 
+function nameMatches(value, query) {
+  var q = str(query).replace(/^\s+|\s+$/g, "").toLowerCase()
+  var v = str(value).replace(/^\s+|\s+$/g, "").toLowerCase()
+  if (q === "" || v === "") return false
+  if (v === q) return true
+  if (q.length >= 4 && v.length >= 4 && (v.indexOf(q) !== -1 || q.indexOf(v) !== -1)) return true
+  return false
+}
+
+function involvesTeam(obj, names) {
+  if (!obj) return false
+  var want = arrayOf(names)
+  if (want.length === 0) return false
+  var fields = [obj.name, obj.winnerName, obj.teamName, obj.heya, obj.team1Name, obj.team2Name]
+  if (obj.team1) fields.push(obj.team1.name, obj.team1.code)
+  if (obj.team2) fields.push(obj.team2.name, obj.team2.code)
+  for (var i = 0; i < want.length; i++) {
+    for (var f = 0; f < fields.length; f++) {
+      if (nameMatches(fields[f], want[i])) return true
+    }
+  }
+  return false
+}
+
+function favoritesOf(map, sportId) {
+  if (!map || typeof map !== "object") return []
+  return arrayOf(map[sportId])
+}
+
+function isFavorite(map, sportId, name) {
+  return involvesTeam({ name: name }, favoritesOf(map, sportId))
+}
+
+function toggleFavorite(map, sportId, name) {
+  var next = {}
+  var src = map && typeof map === "object" ? map : {}
+  for (var k in src) next[k] = arrayOf(src[k]).slice()
+  var id = str(sportId)
+  var value = str(name).replace(/^\s+|\s+$/g, "")
+  if (id === "" || value === "") return next
+  var list = arrayOf(next[id])
+  var at = -1
+  for (var i = 0; i < list.length; i++) {
+    if (str(list[i]).toLowerCase() === value.toLowerCase()) { at = i; break }
+  }
+  if (at >= 0) {
+    var kept = []
+    for (var j = 0; j < list.length; j++) if (j !== at) kept.push(list[j])
+    next[id] = kept
+  } else {
+    list.push(value)
+    next[id] = list
+  }
+  return next
+}
+
+function seedFavorites(map, seeds) {
+  var next = {}
+  var src = map && typeof map === "object" ? map : {}
+  for (var k in src) next[k] = arrayOf(src[k]).slice()
+  var rows = arrayOf(seeds)
+  for (var i = 0; i < rows.length; i++) {
+    var row = rows[i]
+    if (!row || !row.sport || !row.name) continue
+    if (favoritesOf(next, row.sport).length > 0) continue
+    next[row.sport] = [str(row.name)]
+  }
+  return next
+}
+
+function pickTrackedEvent(events, names, nowMs) {
+  var list = arrayOf(events)
+  var want = arrayOf(names)
+  if (want.length === 0) return null
+  var live = null
+  var next = null
+  for (var i = 0; i < list.length; i++) {
+    var ev = list[i]
+    if (!involvesTeam(ev, want)) continue
+    var start = ev.startAt
+    var end = ev.endAt || ev.weekendEndAt
+    if (SportsTime.isInstant(start) && SportsTime.isInstant(end) && nowMs >= start && nowMs < end) {
+      live = ev
+      break
+    }
+    if (SportsTime.isInstant(start) && start > nowMs && !next) next = ev
+  }
+  return live || next
+}
+
+function anyFavoriteLive(matches, names) {
+  var list = arrayOf(matches)
+  var want = arrayOf(names)
+  if (want.length === 0) return false
+  for (var i = 0; i < list.length; i++) {
+    if (list[i] && list[i].live && involvesTeam(list[i], want)) return true
+  }
+  return false
+}
+
+function nextFavoriteMatch(matches, names, nowMs) {
+  var list = arrayOf(matches)
+  var want = arrayOf(names)
+  if (want.length === 0) return null
+  var live = null
+  var next = null
+  var recent = null
+  for (var i = 0; i < list.length; i++) {
+    var m = list[i]
+    if (!involvesTeam(m, want)) continue
+    if (m.live) { live = m; break }
+    if (!m.finished && SportsTime.isInstant(m.startAt) && m.startAt > nowMs) {
+      if (!next || m.startAt < next.startAt) next = m
+    } else if (m.finished && SportsTime.isInstant(m.startAt)) {
+      if (!recent || m.startAt > recent.startAt) recent = m
+    }
+  }
+  return live || next || recent
+}
+
 function matchPin(row, query) {
   var q = str(query).replace(/^\s+|\s+$/g, "").toLowerCase()
   if (q === "" || !row) return false
@@ -196,6 +321,23 @@ function matchPin(row, query) {
     if (q.length >= 3 && str(fields[i]).toLowerCase().indexOf(q) !== -1) return true
   }
   return false
+}
+
+function standingsWithFavorites(standings, topCount, names) {
+  var list = Array.isArray(standings) ? standings.slice() : []
+  var top = list.slice(0, topCount || 5)
+  var extras = []
+  var want = arrayOf(names)
+  for (var i = 0; i < list.length; i++) {
+    if (!involvesTeam(list[i], want)) continue
+    var inTop = false
+    for (var t = 0; t < top.length; t++) {
+      if (top[t] === list[i] || (top[t].id && list[i].id && top[t].id === list[i].id) || top[t].name === list[i].name)
+        inTop = true
+    }
+    if (!inTop) extras.push(list[i])
+  }
+  return { top: top, extras: extras, pin: extras[0] || null, pinInTop: extras.length === 0 && want.length > 0, leader: list[0] || null, gap: null }
 }
 
 function standingsWithPin(standings, topCount, pinQuery) {
@@ -257,6 +399,16 @@ if (typeof module !== "undefined") {
     currentEventIndex: currentEventIndex,
     upcomingEvents: upcomingEvents,
     matchPin: matchPin,
+    nameMatches: nameMatches,
+    involvesTeam: involvesTeam,
+    favoritesOf: favoritesOf,
+    isFavorite: isFavorite,
+    toggleFavorite: toggleFavorite,
+    seedFavorites: seedFavorites,
+    pickTrackedEvent: pickTrackedEvent,
+    anyFavoriteLive: anyFavoriteLive,
+    nextFavoriteMatch: nextFavoriteMatch,
+    standingsWithFavorites: standingsWithFavorites,
     standingsWithPin: standingsWithPin,
     hashColor: hashColor
   }

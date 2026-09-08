@@ -10,6 +10,7 @@ QtObject {
   property int refreshMinutes: 15
   property string highlightPlayer: ""
   property string highlightTeam: ""
+  property var highlightTeams: []
   readonly property string title: "Counter-Strike"
 
   property var events: []
@@ -30,7 +31,7 @@ QtObject {
       startAt: now, endAt: now + 3 * SportsTime.HOUR, dateOnly: false
     }
   }
-  readonly property var teamStandings: SportsModel.standingsWithPin(teamRows, 5, highlightTeam)
+  readonly property var teamStandings: SportsModel.standingsWithFavorites(teamRows, 5, highlightTeams && highlightTeams.length > 0 ? highlightTeams : (highlightTeam ? [highlightTeam] : []))
   readonly property var playerStandings: SportsModel.standingsWithPin(playerRows, 5, highlightPlayer)
   readonly property var recent: matches.slice(0, 8)
   readonly property bool offSeason: events.length > 0 && currentIndex < 0
