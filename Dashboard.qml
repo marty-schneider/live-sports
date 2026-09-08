@@ -42,10 +42,11 @@ Panel {
   property string sportLock: "auto"
   property string gtContinent: "all"
   property var pins: ({})
+  property var followed: []
+  property bool settingsOpen: false
   readonly property var sportIds: ["cs", "nfl", "nba", "mlb", "nhl", "epl", "seriea", "ligue1", "laliga", "sumo", "gt"]
   readonly property var sports: sportIds
-  readonly property var sportChips: [
-    { id: "auto", label: "AUTO" },
+  readonly property var sportCatalog: [
     { id: "cs", label: "CS2" },
     { id: "nfl", label: "NFL" },
     { id: "nba", label: "NBA" },
@@ -58,6 +59,15 @@ Panel {
     { id: "sumo", label: "SUMO" },
     { id: "gt", label: "GT" }
   ]
+  readonly property var sportChips: [{ id: "auto", label: "AUTO" }].concat(sportCatalog)
+  readonly property var followedIds: SportsModel.normalizeFollowed(followed, sportIds)
+  readonly property var visibleChips: {
+    var out = [{ id: "auto", label: "AUTO" }]
+    for (var i = 0; i < sportCatalog.length; i++) {
+      if (followedIds.indexOf(sportCatalog[i].id) >= 0) out.push(sportCatalog[i])
+    }
+    return out
+  }
 
   readonly property double now: timeSvc.now
   readonly property var timeCtx: timeSvc.context
@@ -201,21 +211,45 @@ Panel {
     return String(row.points) + " pts"
   }
 
-  readonly property string autoSportId: SportsModel.pickAutoSport([
-    { id: "cs", live: root.cs.liveMatches.length > 0, nextAt: SportsModel.nextAt(root.cs.event, root.now) },
-    { id: "nfl", live: root.nfl.liveMatches.length > 0, nextAt: SportsModel.nextAt(root.nfl.event, root.now) },
-    { id: "nba", live: root.nba.liveMatches.length > 0, nextAt: SportsModel.nextAt(root.nba.event, root.now) },
-    { id: "mlb", live: root.mlb.liveMatches.length > 0, nextAt: SportsModel.nextAt(root.mlb.event, root.now) },
-    { id: "nhl", live: root.nhl.liveMatches.length > 0, nextAt: SportsModel.nextAt(root.nhl.event, root.now) },
-    { id: "epl", live: root.epl.liveMatches.length > 0, nextAt: SportsModel.nextAt(root.epl.event, root.now) },
-    { id: "seriea", live: root.seriea.liveMatches.length > 0, nextAt: SportsModel.nextAt(root.seriea.event, root.now) },
-    { id: "ligue1", live: root.ligue1.liveMatches.length > 0, nextAt: SportsModel.nextAt(root.ligue1.event, root.now) },
-    { id: "laliga", live: root.laliga.liveMatches.length > 0, nextAt: SportsModel.nextAt(root.laliga.event, root.now) },
-    { id: "sumo", live: root.sumo.liveMatches.length > 0, nextAt: SportsModel.nextAt(root.sumo.event, root.now) },
-    { id: "gt", live: root.gt.liveMatches.length > 0, nextAt: SportsModel.nextAt(root.gt.event, root.now) }
-  ], root.now)
+  function isFollowed(id) {
+    return followedIds.indexOf(id) >= 0
+  }
 
-  readonly property string viewedSport: sportIds.indexOf(sportLock) >= 0 ? sportLock : autoSportId
+  function toggleFollow(id) {
+    var next = SportsModel.toggleFollowed(followedIds, id, sportIds)
+    followed = next
+    if (sportLock !== "auto" && next.indexOf(sportLock) < 0) sportLock = "auto"
+    persistUi()
+  }
+
+  function followAll() {
+    followed = sportIds.slice()
+    persistUi()
+  }
+
+  readonly property var autoCandidates: {
+    var all = [
+      { id: "cs", live: root.cs.liveMatches.length > 0, nextAt: SportsModel.nextAt(root.cs.event, root.now) },
+      { id: "nfl", live: root.nfl.liveMatches.length > 0, nextAt: SportsModel.nextAt(root.nfl.event, root.now) },
+      { id: "nba", live: root.nba.liveMatches.length > 0, nextAt: SportsModel.nextAt(root.nba.event, root.now) },
+      { id: "mlb", live: root.mlb.liveMatches.length > 0, nextAt: SportsModel.nextAt(root.mlb.event, root.now) },
+      { id: "nhl", live: root.nhl.liveMatches.length > 0, nextAt: SportsModel.nextAt(root.nhl.event, root.now) },
+      { id: "epl", live: root.epl.liveMatches.length > 0, nextAt: SportsModel.nextAt(root.epl.event, root.now) },
+      { id: "seriea", live: root.seriea.liveMatches.length > 0, nextAt: SportsModel.nextAt(root.seriea.event, root.now) },
+      { id: "ligue1", live: root.ligue1.liveMatches.length > 0, nextAt: SportsModel.nextAt(root.ligue1.event, root.now) },
+      { id: "laliga", live: root.laliga.liveMatches.length > 0, nextAt: SportsModel.nextAt(root.laliga.event, root.now) },
+      { id: "sumo", live: root.sumo.liveMatches.length > 0, nextAt: SportsModel.nextAt(root.sumo.event, root.now) },
+      { id: "gt", live: root.gt.liveMatches.length > 0, nextAt: SportsModel.nextAt(root.gt.event, root.now) }
+    ]
+    var out = []
+    for (var i = 0; i < all.length; i++) {
+      if (followedIds.indexOf(all[i].id) >= 0) out.push(all[i])
+    }
+    return out
+  }
+  readonly property string autoSportId: SportsModel.pickAutoSport(autoCandidates, root.now)
+
+  readonly property string viewedSport: followedIds.indexOf(sportLock) >= 0 ? sportLock : autoSportId
   readonly property var sport: sportService(viewedSport)
   readonly property string sportLabel: chipLabel(viewedSport)
   readonly property string sportTitle: sport && sport.title ? sport.title : chipLabel(viewedSport)
@@ -284,12 +318,12 @@ Panel {
 
   function selectSport(id) {
     if (id === "auto") sportLock = "auto"
-    else if (sports.indexOf(id) >= 0) sportLock = id
+    else if (followedIds.indexOf(id) >= 0) sportLock = id
     persistUi()
   }
 
   function cycleSport(delta) {
-    var order = ["auto"].concat(sports)
+    var order = ["auto"].concat(followedIds)
     var i = order.indexOf(sportLock)
     if (i < 0) i = 0
     selectSport(order[(i + delta + order.length) % order.length])
@@ -323,6 +357,7 @@ Panel {
     uiFile.setText(JSON.stringify({
       sportLock: sportLock,
       gtContinent: gtContinent,
+      followed: followedIds,
       pins: {
         csPlayer: csPinPlayer, csTeam: csPinTeam,
         sumoPlayer: sumoPinPlayer, sumoTeam: sumoPinTeam,
@@ -341,6 +376,7 @@ Panel {
     if (parsed.sportLock === "auto" || sports.indexOf(parsed.sportLock) >= 0) sportLock = parsed.sportLock
     else if (parsed.sportId === "auto" || sports.indexOf(parsed.sportId) >= 0) sportLock = parsed.sportId
     if (parsed.gtContinent) gtContinent = parsed.gtContinent
+    if (Array.isArray(parsed.followed)) followed = parsed.followed
     var pins = parsed.pins || {}
     if (pins.csPlayer !== undefined) csPinPlayer = pins.csPlayer
     if (pins.csTeam !== undefined) csPinTeam = pins.csTeam
@@ -442,7 +478,7 @@ Panel {
     function toggle(): void { root.toggle() }
     function refresh(): void { root.refresh() }
     function sport(id: string): string {
-      if (id === "auto" || root.sportIds.indexOf(id) >= 0) root.selectSport(id)
+      if (id === "auto" || root.followedIds.indexOf(id) >= 0) root.selectSport(id)
       else if (id === "next") root.cycleSport(1)
       else if (id === "prev") root.cycleSport(-1)
       return root.viewedSport
@@ -452,6 +488,10 @@ Panel {
       else if (mode === "auto") root.liveOverride = ""
       else root.toggleLive()
       return root.liveMode ? "on" : "off"
+    }
+    function settings(): string {
+      root.settingsOpen = !root.settingsOpen
+      return root.settingsOpen ? "on" : "off"
     }
     function status(): string { return root.tooltipText }
   }
@@ -475,7 +515,10 @@ Panel {
     PanelKeyCatcher {
       id: keyCatcher
       anchors.fill: parent
-      onCloseRequested: root.close()
+      onCloseRequested: {
+        if (root.settingsOpen) root.settingsOpen = false
+        else root.close()
+      }
       onTabRequested: function(direction) { root.switchPanel(direction) }
       onActivateRequested: { if (root.hasLiveContent) root.toggleLive() }
       onMoveRequested: function(dx, dy) {
@@ -485,6 +528,7 @@ Panel {
       }
       onTextKey: function(text) {
         if (text === "r") root.refresh()
+        else if (text === "s") root.settingsOpen = !root.settingsOpen
         else if (text === "0") root.selectSport("auto")
         else if (text === "1") root.selectSport("cs")
         else if (text === "2") root.selectSport("sumo")
@@ -509,19 +553,19 @@ Panel {
 
           Item {
             width: parent.width
-            height: Math.max(switcher.implicitHeight, liveToggle.implicitHeight)
+            height: Math.max(switcher.implicitHeight, headerActions.implicitHeight)
 
             Flow {
               id: switcher
               anchors.left: parent.left
-              anchors.right: liveToggle.visible ? liveToggle.left : parent.right
-              anchors.rightMargin: liveToggle.visible ? Style.space(8) : Style.space(4)
+              anchors.right: headerActions.left
+              anchors.rightMargin: Style.space(8)
               anchors.leftMargin: Style.space(4)
               anchors.verticalCenter: parent.verticalCenter
               spacing: Style.space(6)
 
               Repeater {
-                model: root.sportChips
+                model: root.visibleChips
                 Rectangle {
                   required property var modelData
                   readonly property bool selected: root.sportLock === modelData.id
@@ -554,33 +598,50 @@ Panel {
               }
             }
 
-            Rectangle {
-              id: liveToggle
-              visible: root.hasLiveContent
+            Row {
+              id: headerActions
               anchors.right: parent.right
               anchors.rightMargin: Style.space(4)
               anchors.verticalCenter: parent.verticalCenter
-              implicitWidth: toggleLabel.implicitWidth + Style.space(20)
-              implicitHeight: toggleLabel.implicitHeight + Style.space(9)
-              radius: Math.max(2, Style.cornerRadius)
-              color: root.liveMode ? Util.alpha(Color.urgent, 0.18) : Util.alpha(root.fg, 0.05)
-              border.width: 1
-              border.color: root.liveMode ? Util.alpha(Color.urgent, 0.55) : Util.alpha(root.fg, 0.16)
-              Text {
-                id: toggleLabel
-                anchors.centerIn: parent
-                text: root.liveMode ? "LIVE · ON" : "LIVE · OFF"
-                color: root.liveMode ? Color.urgent : root.dim
-                font.family: root.fontFamily
-                font.pixelSize: Style.font.caption
-                font.bold: root.liveMode
-                font.letterSpacing: 0.8
+              spacing: Style.space(6)
+
+              PanelActionButton {
+                iconText: "󰒓"
+                tooltipText: root.settingsOpen ? "Close follow list" : "Choose sports to follow"
+                foreground: root.settingsOpen ? Color.accent : root.dim
+                hoverColor: Color.accent
+                fontFamily: root.fontFamily
+                bordered: root.settingsOpen
+                onClicked: root.settingsOpen = !root.settingsOpen
+                Accessible.role: Accessible.Button
+                Accessible.name: "Followed sports"
               }
-              MouseArea {
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.toggleLive()
+
+              Rectangle {
+                id: liveToggle
+                visible: root.hasLiveContent && !root.settingsOpen
+                implicitWidth: toggleLabel.implicitWidth + Style.space(20)
+                implicitHeight: toggleLabel.implicitHeight + Style.space(9)
+                radius: Math.max(2, Style.cornerRadius)
+                color: root.liveMode ? Util.alpha(Color.urgent, 0.18) : Util.alpha(root.fg, 0.05)
+                border.width: 1
+                border.color: root.liveMode ? Util.alpha(Color.urgent, 0.55) : Util.alpha(root.fg, 0.16)
+                Text {
+                  id: toggleLabel
+                  anchors.centerIn: parent
+                  text: root.liveMode ? "LIVE · ON" : "LIVE · OFF"
+                  color: root.liveMode ? Color.urgent : root.dim
+                  font.family: root.fontFamily
+                  font.pixelSize: Style.font.caption
+                  font.bold: root.liveMode
+                  font.letterSpacing: 0.8
+                }
+                MouseArea {
+                  anchors.fill: parent
+                  hoverEnabled: true
+                  cursorShape: Qt.PointingHandCursor
+                  onClicked: root.toggleLive()
+                }
               }
             }
           }
@@ -588,6 +649,7 @@ Panel {
           Row {
             leftPadding: Style.space(4)
             spacing: Style.space(10)
+            visible: !root.settingsOpen
             StatusChip {
               text: root.liveMode ? "LIVE" : (root.sport.weekend ? root.sport.weekend.label : root.sportTitle.toUpperCase())
               tone: root.liveMode || (root.sport.weekend && root.sport.weekend.kind === "live") ? "live"
@@ -609,7 +671,7 @@ Panel {
           Column {
             width: parent.width
             spacing: Style.space(6)
-            visible: !root.sport.loaded
+            visible: !root.settingsOpen && !root.sport.loaded
             Text {
               text: root.sport.failed ? "Could not reach the " + root.sportTitle + " data service." : "Loading " + root.sportTitle + "…"
               color: root.dim
@@ -621,7 +683,7 @@ Panel {
 
           Text {
             width: parent.width
-            visible: root.sport.loaded && root.sport.offSeason
+            visible: !root.settingsOpen && root.sport.loaded && root.sport.offSeason
             text: "Nothing scheduled. Waiting for the next " + root.sportTitle + " event."
             color: root.dim
             font.family: root.fontFamily
@@ -632,26 +694,34 @@ Panel {
 
           Loader {
             width: parent.width
-            active: root.liveMode && root.sport.loaded
+            active: !root.settingsOpen && root.liveMode && root.sport.loaded
             visible: active
             sourceComponent: liveView
           }
 
           Loader {
             width: parent.width
-            active: !root.liveMode && root.sport.loaded && !root.sport.offSeason
+            active: !root.settingsOpen && !root.liveMode && root.sport.loaded && !root.sport.offSeason
             visible: active
             sourceComponent: overview
           }
 
-          PanelSeparator { width: parent.width; visible: root.sport.loaded }
+          Loader {
+            width: parent.width
+            active: root.settingsOpen
+            visible: active
+            sourceComponent: followSettings
+          }
+
+          PanelSeparator { width: parent.width; visible: root.sport.loaded || root.settingsOpen }
 
           Item {
             width: parent.width
             height: footerLeft.implicitHeight
-            visible: root.sport.loaded
+            visible: root.sport.loaded || root.settingsOpen
             Column {
               id: footerLeft
+              visible: !root.settingsOpen
               anchors.left: parent.left
               anchors.leftMargin: Style.space(4)
               spacing: Style.space(2)
@@ -674,11 +744,85 @@ Panel {
               anchors.right: parent.right
               anchors.rightMargin: Style.space(4)
               anchors.bottom: parent.bottom
-              text: "0 auto · chip locks a sport · click to pin · r refresh · esc close"
+              text: root.settingsOpen
+                ? "toggle sports to follow · s or esc back"
+                : "0 auto · gear follows · click to pin · r refresh · esc close"
               color: root.dimmer
               font.family: root.fontFamily
               font.pixelSize: Style.font.caption
             }
+          }
+        }
+      }
+    }
+  }
+
+  Component {
+    id: followSettings
+    Column {
+      width: parent ? parent.width : 0
+      spacing: Style.space(8)
+
+      Item {
+        width: parent.width
+        height: followHead.implicitHeight
+        PanelSectionHeader {
+          id: followHead
+          text: "FOLLOW · " + root.followedIds.length
+          foreground: root.fg
+          fontFamily: root.fontFamily
+          leftPadding: Style.space(4)
+        }
+        Text {
+          anchors.right: parent.right
+          anchors.rightMargin: Style.space(4)
+          anchors.verticalCenter: parent.verticalCenter
+          visible: root.followedIds.length < root.sportIds.length
+          text: "ALL"
+          color: Color.accent
+          font.family: root.fontFamily
+          font.pixelSize: Style.font.caption
+          font.bold: true
+          font.letterSpacing: 0.8
+          MouseArea {
+            anchors.fill: parent
+            anchors.margins: -Style.space(6)
+            cursorShape: Qt.PointingHandCursor
+            onClicked: root.followAll()
+          }
+          Accessible.role: Accessible.Button
+          Accessible.name: "Follow all sports"
+        }
+      }
+
+      Text {
+        width: parent.width
+        leftPadding: Style.space(4)
+        rightPadding: Style.space(4)
+        wrapMode: Text.WordWrap
+        text: "Chips and AUTO only include sports you follow. Keep at least one on."
+        color: root.dim
+        font.family: root.fontFamily
+        font.pixelSize: Style.font.caption
+      }
+
+      Column {
+        width: parent.width
+        spacing: Style.space(4)
+        Repeater {
+          model: root.sportCatalog
+          Toggle {
+            required property var modelData
+            width: parent.width
+            label: modelData.label
+            description: {
+              var svc = root.sportService(modelData.id)
+              return svc && svc.title ? svc.title : modelData.label
+            }
+            checked: root.isFollowed(modelData.id)
+            foreground: root.fg
+            fontFamily: root.fontFamily
+            onClicked: root.toggleFollow(modelData.id)
           }
         }
       }

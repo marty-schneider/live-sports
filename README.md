@@ -1,6 +1,6 @@
 # Sports Tracker for Omarchy
 
-**v0.5.0** — NFL, NBA, MLB, NHL, Premier League, Serie A, Ligue 1, and La Liga, using ESPN kickoff times when the feed marks them valid.
+**v0.6.0** — Follow only the sports you care about. Gear on the panel toggles the list; chips and AUTO ignore the rest.
 
 One bar pill and dashboard, with a switcher so more sports can be added later:
 
@@ -32,7 +32,9 @@ omarchy plugin enable io.github.marty-schneider.sports-tracker
 
 ## Use
 
-The pill follows whatever is next (or on now) unless you lock a sport with the chips. It shows the event, not the sport: `EPL 5d`, `NFL 2d`, `AKI 6d`, `ZAND 11d`.
+The pill follows whatever is next (or on now) among sports you follow, unless you lock a sport with the chips. It shows the event, not the sport: `EPL 5d`, `NFL 2d`, `AKI 6d`, `ZAND 11d`.
+
+The gear opens a follow list. Turn sports off to hide their chips. AUTO only looks at what you follow. `s` toggles that list; Escape goes back.
 
 Click a player, team, rikishi, or heya to pin it. Notifications fire for the sport on the pill, plus any sport you have a pin in.
 
@@ -60,7 +62,7 @@ On the plugin’s `shell.json` entry:
 }
 ```
 
-Selected sport is also remembered in `~/.local/state/omarchy/sports-tracker/ui.json`.
+Selected sport and the follow list are remembered in `~/.local/state/omarchy/sports-tracker/ui.json`.
 
 ## Data sources
 

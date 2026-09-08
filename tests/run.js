@@ -97,6 +97,12 @@ assert("auto-sport picks soonest", SportsModel.pickAutoSport([
   { id: "sumo", live: false, nextAt: 80 },
   { id: "gt", live: false, nextAt: 500 }
 ], 0) === "sumo")
+assert("followed empty means all", SportsModel.normalizeFollowed([], ["cs", "nfl", "sumo"]).join(",") === "cs,nfl,sumo")
+assert("followed keeps catalog order", SportsModel.normalizeFollowed(["sumo", "cs"], ["cs", "nfl", "sumo"]).join(",") === "cs,sumo")
+assert("followed unknown falls back to all", SportsModel.normalizeFollowed(["nope"], ["cs", "nfl"]).join(",") === "cs,nfl")
+assert("cannot unfollow the last sport", SportsModel.toggleFollowed(["cs"], "cs", ["cs", "nfl"]).join(",") === "cs")
+assert("unfollow one of many", SportsModel.toggleFollowed(["cs", "nfl"], "cs", ["cs", "nfl", "sumo"]).join(",") === "nfl")
+assert("follow adds back in catalog order", SportsModel.toggleFollowed(["nfl"], "cs", ["cs", "nfl", "sumo"]).join(",") === "cs,nfl")
 assert("day countdown today", SportsTime.dayCountdown(0, 0, SportsTime.defaultContext()) === "today")
 assert("day countdown future", SportsTime.dayCountdown(3 * SportsTime.DAY, 0, SportsTime.defaultContext()) === "3d")
 

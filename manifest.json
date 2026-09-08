@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "io.github.marty-schneider.sports-tracker",
   "name": "Sports Tracker",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "author": "Marty Schneider",
   "license": "MIT",
   "description": "Sports Tracker: CS2, NFL, NBA, MLB, NHL, Premier League, Serie A, Ligue 1, La Liga, Sumo, and GT World Challenge.",

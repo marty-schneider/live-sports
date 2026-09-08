@@ -123,6 +123,34 @@ function pickAutoSport(candidates, nowMs) {
   return bestId || (list[0] ? list[0].id : "cs")
 }
 
+function normalizeFollowed(selected, allIds) {
+  var all = arrayOf(allIds)
+  var want = arrayOf(selected)
+  if (want.length === 0) return all.slice()
+  var out = []
+  for (var i = 0; i < all.length; i++) {
+    if (want.indexOf(all[i]) >= 0) out.push(all[i])
+  }
+  return out.length > 0 ? out : all.slice()
+}
+
+function toggleFollowed(selected, id, allIds) {
+  var all = arrayOf(allIds)
+  if (all.indexOf(id) < 0) return normalizeFollowed(selected, all)
+  var current = normalizeFollowed(selected, all)
+  var at = current.indexOf(id)
+  if (at >= 0) {
+    if (current.length === 1) return current
+    var next = []
+    for (var i = 0; i < current.length; i++) {
+      if (i !== at) next.push(current[i])
+    }
+    return next
+  }
+  current.push(id)
+  return normalizeFollowed(current, all)
+}
+
 function weekendState(event, nowMs, liveLabel) {
   if (!event) return { label: "OFF SEASON", kind: "idle" }
   var live = liveSession(event, nowMs)
@@ -223,6 +251,8 @@ if (typeof module !== "undefined") {
     eventIsDateOnly: eventIsDateOnly,
     nextAt: nextAt,
     pickAutoSport: pickAutoSport,
+    normalizeFollowed: normalizeFollowed,
+    toggleFollowed: toggleFollowed,
     weekendState: weekendState,
     currentEventIndex: currentEventIndex,
     upcomingEvents: upcomingEvents,
