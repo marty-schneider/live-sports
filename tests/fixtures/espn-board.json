@@ -5,10 +5,14 @@
       "date": "2026-09-10T00:20Z",
       "name": "New England Patriots at Seattle Seahawks",
       "status": { "type": { "state": "pre", "completed": false } },
+      "links": [
+        { "rel": ["summary", "desktop", "event"], "href": "https://www.espn.com/nfl/game/_/gameId/401/patriots-seahawks" }
+      ],
       "competitions": [
         {
           "timeValid": true,
           "venue": { "fullName": "Lumen Field" },
+          "broadcasts": [{ "market": "national", "names": ["NBC"] }],
           "competitors": [
             { "homeAway": "home", "score": "0", "team": { "id": "26", "displayName": "Seattle Seahawks", "abbreviation": "SEA" } },
             { "homeAway": "away", "score": "0", "team": { "id": "17", "displayName": "New England Patriots", "abbreviation": "NE" } }

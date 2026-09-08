@@ -2,6 +2,7 @@
 
 .import "SportsTime.js" as SportsTime
 .import "SportsModel.js" as SportsModel
+.import "SportsWatch.js" as SportsWatch
 
 function competitor(list, side) {
   var rows = SportsModel.arrayOf(list)
@@ -58,7 +59,9 @@ function parseEspnScoreboard(raw, meta) {
       finished: finished,
       live: live,
       venue: venue,
-      name: SportsModel.str(row.name || row.shortName) || (away.name && home.name ? away.name + " at " + home.name : "")
+      name: SportsModel.str(row.name || row.shortName) || (away.name && home.name ? away.name + " at " + home.name : ""),
+      broadcasts: SportsWatch.parseBroadcasts(comp),
+      infoUrl: SportsWatch.parseInfoUrl(row)
     })
   }
   return matches
@@ -95,6 +98,8 @@ function matchToEvent(match, meta) {
     dateOnly: match.dateOnly === true,
     team1Name: SportsModel.str(match.team1 && match.team1.name),
     team2Name: SportsModel.str(match.team2 && match.team2.name),
+    broadcasts: SportsModel.arrayOf(match.broadcasts),
+    infoUrl: SportsModel.str(match.infoUrl),
     round: 0,
     season: ""
   }

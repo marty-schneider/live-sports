@@ -5,6 +5,7 @@ import qs.Commons
 import qs.Ui
 import "SportsTime.js" as SportsTime
 import "SportsModel.js" as SportsModel
+import "SportsWatch.js" as SportsWatch
 import "CsColors.js" as CsColors
 import "GtColors.js" as GtColors
 
@@ -215,6 +216,13 @@ Panel {
       if (sportChips[i].id === id) return sportChips[i].label
     }
     return id.toUpperCase()
+  }
+
+  function openLink(url) {
+    var href = String(url || "")
+    if (href.indexOf("https://") !== 0) return
+    if (typeof Qt !== "undefined" && Qt.openUrlExternally) Qt.openUrlExternally(href)
+    else Util.execArgv(["xdg-open", href])
   }
 
   function standingValue(row) {
@@ -1110,6 +1118,14 @@ Panel {
             font.bold: true
           }
         }
+        WatchLinks {
+          info: SportsWatch.forSport(root.viewedSport)
+          broadcasts: event && event.broadcasts ? event.broadcasts : []
+          infoUrl: event && event.infoUrl ? event.infoUrl : ""
+          foreground: root.fg
+          fontFamily: root.fontFamily
+          onOpenUrl: function(url) { root.openLink(url) }
+        }
       }
 
       Column {
@@ -1521,6 +1537,15 @@ Panel {
             fontFamily: root.fontFamily
             filled: true
           }
+        }
+        WatchLinks {
+          leftPadding: Style.space(4)
+          info: SportsWatch.forSport(root.viewedSport)
+          broadcasts: root.sport.event && root.sport.event.broadcasts ? root.sport.event.broadcasts : []
+          infoUrl: root.sport.event && root.sport.event.infoUrl ? root.sport.event.infoUrl : ""
+          foreground: root.fg
+          fontFamily: root.fontFamily
+          onOpenUrl: function(url) { root.openLink(url) }
         }
 
         Column {

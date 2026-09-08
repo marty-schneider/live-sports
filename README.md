@@ -1,6 +1,6 @@
 # Sports Tracker for Omarchy
 
-**v0.7.0** — Favorite teams to track. Click a standings row or use the gear; AUTO, the pill, and notifications follow those games.
+**v0.8.0** — Where to watch and live updates for each sport. Official league pages, plus TV/stream names from ESPN when the scoreboard lists them.
 
 One bar pill and dashboard, with a switcher so more sports can be added later:
 
@@ -35,6 +35,8 @@ omarchy plugin enable io.github.marty-schneider.sports-tracker
 The pill follows whatever is next (or on now) among sports you follow, unless you lock a sport with the chips. It shows the event, not the sport: `EPL 5d`, `NFL 2d`, `AKI 6d`, `ZAND 11d`.
 
 The gear opens a follow list. Turn sports off to hide their chips. AUTO only looks at what you follow. `s` toggles that list; Escape goes back.
+
+**WHERE TO WATCH** opens the league’s official TV/stream guide (rights depend on your country). **LIVE UPDATES** opens scores or the game page. If ESPN lists a channel for that match, it shows as `On NBC`.
 
 Click a team or heya to favorite it (several per sport). The gear also lists every club. AUTO, the pill, and notifications follow those games. Player pins stay as they were.
 

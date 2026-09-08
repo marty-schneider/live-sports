@@ -33,7 +33,8 @@ const SportsModel = load("SportsModel.js", { SportsTime })
 const CsModel = load("CsModel.js", { SportsTime, SportsModel })
 const SumoModel = load("SumoModel.js", { SportsTime, SportsModel })
 const GtModel = load("GtModel.js", { SportsTime, SportsModel })
-const LeagueModel = load("LeagueModel.js", { SportsTime, SportsModel })
+const SportsWatch = load("SportsWatch.js", { SportsModel })
+const LeagueModel = load("LeagueModel.js", { SportsTime, SportsModel, SportsWatch })
 
 const SOURCES = {
   "cs-rankings.json": "https://api.csapi.de/rankings/",
@@ -207,6 +208,10 @@ assert("closed qualifier is not tier 1", CsModel.isTier1("IEM Beijing 2026 Close
 const espnBoard = LeagueModel.parseEspnScoreboard(fs.readFileSync(path.join(FIXTURES, "espn-board.json"), "utf8"), { title: "NFL", short: "NFL", id: "nfl" })
 assert("ESPN board parses two games", espnBoard.length === 2)
 assert("ESPN uses kickoff from feed", espnBoard[0].dateOnly === false && espnBoard[0].startAt === Date.parse("2026-09-10T00:20:00Z"))
+assert("ESPN keeps broadcast names", espnBoard[0].broadcasts.join(",") === "NBC")
+assert("ESPN keeps the game page", espnBoard[0].infoUrl.indexOf("https://www.espn.com/nfl/game") === 0)
+assert("EPL has a where-to-watch page", SportsWatch.forSport("epl").watch.url.indexOf("https://") === 0)
+assert("Sumo updates go to the NSK", SportsWatch.forSport("sumo").updates.url.indexOf("sumo.or.jp") !== -1)
 assert("ESPN finished game has a winner", espnBoard[1].finished === true && espnBoard[1].winnerName === "Buffalo Bills")
 const espnSplit = LeagueModel.splitMatches(espnBoard, Date.parse("2026-09-08T00:00:00Z"))
 assert("ESPN upcoming vs recent", espnSplit.upcoming.length === 1 && espnSplit.recent.length === 1)
