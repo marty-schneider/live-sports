@@ -95,7 +95,7 @@ QtObject {
       'cred_ok || exit 1\n' +
       'tok=$(sed -n "s/^pandascore_token=//p" "$f" | head -1 | tr -d "\\r")\n' +
       'case "$tok" in ""|*[!A-Za-z0-9._~+/=-]*) exit 1 ;; esac\n' +
-      'curl -fsS --proto "=https" --proto-redir "=https" --max-redirs 2 \\\n' +
+      'curl -fsS --proto "=https" --max-redirs 0 \\\n' +
       '  --max-filesize 1048576 --max-time 12 \\\n' +
       '  -H "Authorization: Bearer ${tok}" \\\n' +
       '  -H "User-Agent: Mozilla/5.0 (compatible; omarchy-sports-tracker/0.8)" \\\n' +

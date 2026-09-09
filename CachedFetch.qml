@@ -138,9 +138,11 @@ QtObject {
     '[ -f /proc/self/fd/4 ] || exit 1\n' +
     'tmpid=$(stat -Lc %d:%i /proc/self/fd/4) || exit 1\n' +
     '[ "$tmpid" = "$(stat -c %d:%i "$tmp")" ] || exit 1\n' +
-    // https only, on the first request and on every redirect, with a bounded
-    // hop count — a 30x answer must not be able to walk this fetch onto
-    // file://, onto a local address, or around a redirect loop.
+    // HTTPS only. These endpoints are fixed JSON APIs, so redirects are
+    // refused (`-L --max-redirs 0` exits 47 on a 3xx). That keeps a
+    // compromised allowlisted origin from bouncing the fetch onto some
+    // other HTTPS host, including one on the LAN. Timeout and the head
+    // byte cap still apply.
     //
     // curl writes to a pipe, not to the file, because --max-filesize only
     // acts on a length the server declares: a chunked or unlabelled response
@@ -153,9 +155,9 @@ QtObject {
     // aims back at its own stdout. $? after a pipeline belongs to head, and
     // without curl's status a connection dropped mid-body would look like a
     // complete answer and get cached as truncated JSON.
-    'rc=$({ { curl -fsS -L --proto "=https" --proto-redir "=https" --max-redirs 3 \\\n' +
+    'rc=$({ { curl -fsS -L --proto "=https" --proto-redir "=https" --max-redirs 0 \\\n' +
     '             --max-filesize "$max" --max-time "$timeout" \\\n' +
-    '             -H "User-Agent: Mozilla/5.0 (compatible; omarchy-sports-tracker/0.4; +https://github.com/marty-schneider/sports-tracker)" "$url" -o - 2>/dev/null\n' +
+    '             -H "User-Agent: Mozilla/5.0 (compatible; omarchy-sports-tracker/0.8; +https://github.com/marty-schneider/sports-tracker)" "$url" -o - 2>/dev/null\n' +
     '         printf "%s" "$?" >&3\n' +
     '       } | head -c "$(( max + 1 ))" >&4\n' +
     '     } 3>&1)\n' +

@@ -1,6 +1,6 @@
 # Sports Tracker for Omarchy
 
-**v0.8.1** — Where to watch and live updates for each sport. Official league pages, plus TV/stream names from ESPN when the scoreboard lists them.
+**v0.8.2** — Where to watch and live updates for each sport. Official league pages, plus TV/stream names from ESPN when the scoreboard lists them.
 
 One bar pill and dashboard, with a switcher so more sports can be added later:
 

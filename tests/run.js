@@ -192,6 +192,13 @@ if (fs.existsSync(path.join(FIXTURES, "sumo-torikumi.json"))) {
 }
 
 assert("notificationArg strips dashes", SportsModel.notificationArg("--hint=bad", "x") === "hint=bad")
+
+const fetchScript = fs.readFileSync(path.join(ROOT, "CachedFetch.qml"), "utf8")
+assert("CachedFetch refuses redirects", fetchScript.indexOf('--max-redirs 0') !== -1 && fetchScript.indexOf('--max-redirs 3') === -1)
+const redirectTest = spawnSync("python3", [path.join(__dirname, "redirect-reject.py")], { encoding: "utf8" })
+if (redirectTest.stdout) process.stdout.write(redirectTest.stdout)
+if (redirectTest.stderr) process.stderr.write(redirectTest.stderr)
+assert("redirect to a private host is rejected", redirectTest.status === 0)
 assert("invalid sumo basho rejected", SumoModel.parseBasho(JSON.stringify({
   date: "", startDate: "0001-01-01T00:00:00Z", endDate: "0001-01-01T00:00:00Z"
 }), "202611") === null)
